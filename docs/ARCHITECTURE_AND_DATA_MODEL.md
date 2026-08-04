@@ -163,10 +163,12 @@ Mission:
 MissionShipment:
   missionId
   shipmentId
-  unique(shipmentId) WHERE mission active (با service/transaction یا constraint مناسب)
+  isActiveAssignment Boolean @default(true)
+  createdAt
+  partial unique index (shipmentId) WHERE isActiveAssignment = true  -- ADR-019, migration SQL دستی
 ```
 
-در صورت دشواری partial unique در Prisma، transaction و query locking استفاده شود و migration SQL مکمل مستند گردد.
+طبق ADR-019، چون Prisma schema مستقیماً partial unique index تعریف نمی‌کند، این ایندکس با migration SQL دستی ساخته می‌شود. `isActiveAssignment` هنگام publish در transaction با `SELECT ... FOR UPDATE` روی shipment قفل و true می‌شود؛ هنگام cancel/complete/archive به false تغییر می‌کند تا مرسوله آزاد شود.
 
 ### MapProvider
 
@@ -300,7 +302,7 @@ isEstimated: true
 
 1. re-read خودرو و readiness
 2. بررسی overlap مأموریت خودرو
-3. lock/بررسی مرسوله‌های فعال
+3. `SELECT ... FOR UPDATE` روی مرسوله‌ها و درج `MissionShipment` با `isActiveAssignment=true` (ADR-019)؛ نقض partial unique به خطای `SHIPMENT_ALREADY_ASSIGNED` نگاشت شود
 4. snapshot مبدأ، مقصد، سرعت و route version
 5. محاسبه distance/ETA
 6. ذخیره مأموریت و link مرسوله‌ها

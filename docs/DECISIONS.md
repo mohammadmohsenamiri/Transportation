@@ -103,3 +103,36 @@ SVG upload به‌عنوان input hostile sanitize می‌شود. script، fore
 **Status:** Accepted
 
 برای کاهش پیچیدگی شبکه داخلی، jobهای اولیه می‌توانند DB-backed باشند. در صورت نیاز به throughput/retry بالا، Redis/BullMQ پشت interface افزوده می‌شود؛ domain تغییر نمی‌کند.
+
+## ADR-018 — سیاست ویرایش مأموریت پس از شروع
+
+**Status:** Accepted
+
+پیش از `startAt` (وضعیت نمایشی `WAITING`)، مأموریت `SCHEDULED` به‌طور کامل قابل ویرایش است: خودرو، مسیر، زمان شروع، مقصد و مرسوله‌ها با همان اعتبارسنجی انتشار دوباره بررسی و snapshot می‌شوند.
+
+از لحظه‌ای که وضعیت نمایشی به `IN_PROGRESS` یا `ARRIVED` می‌رسد:
+
+- فقط توضیحات و متادیتای غیرعملیاتی (غیر از خودرو/مسیر/مبدأ/مقصد/زمان/مرسوله) قابل ویرایش می‌ماند.
+- خودرو، مسیر، مبدأ/مقصد و زمان شروع دیگر مستقیماً ویرایش نمی‌شوند؛ تنها مسیر مجاز `cancel` مأموریت جاری (با `cancellationReason` اجباری) و سپس `duplicate` به مأموریت جایگزین با مقادیر پیش‌پرشده است.
+- لغو مأموریت در حال اجرا نیازمند confirmation صریح در UI است.
+- هر دو مأموریت (لغوشده و جایگزین) در `history` و `AuditLog` به هم قابل ردیابی می‌مانند (`metadataJson` مأموریت جدید به `id` مأموریت لغوشده اشاره کند).
+
+این قانون باید در service layer (نه فقط UI) در Phase 7 enforce شود؛ تلاش برای ویرایش مستقیم فیلدهای قفل‌شده پس از شروع باید با خطای domain (`MISSION_ALREADY_STARTED`) رد شود.
+
+## ADR-019 — قید یکتایی مرسوله فعال در مأموریت
+
+**Status:** Accepted
+
+برای تضمین اینکه یک مرسوله در هر لحظه حداکثر در یک مأموریت فعال باشد، فیلد `isActiveAssignment Boolean @default(true)` به مدل `MissionShipment` اضافه می‌شود (به‌روزرسانی در `ARCHITECTURE_AND_DATA_MODEL.md`). چون Prisma schema مستقیماً partial unique index تعریف نمی‌کند، یک migration SQL دستی این ایندکس را می‌سازد:
+
+```sql
+CREATE UNIQUE INDEX "MissionShipment_active_shipment_unique"
+ON "MissionShipment" ("shipmentId")
+WHERE "isActiveAssignment" = true;
+```
+
+رفتار:
+
+- هنگام publish، shipment با `SELECT ... FOR UPDATE` در transaction قفل و رکورد `MissionShipment` جدید با `isActiveAssignment = true` درج می‌شود؛ اگر رکورد فعال دیگری وجود داشته باشد، ایندکس خطای unique برمی‌گرداند و service آن را به خطای domain `SHIPMENT_ALREADY_ASSIGNED` نگاشت می‌کند.
+- هنگام `cancel`، `complete` یا `archive` مأموریت، `isActiveAssignment` مربوط به `false` تغییر می‌کند تا مرسوله آزاد شود.
+- این migration باید به‌صورت دستی (raw SQL در پوشه migration Prisma) نوشته و در Phase 7 مستند شود.
