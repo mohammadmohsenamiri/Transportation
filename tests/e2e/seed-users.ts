@@ -44,6 +44,11 @@ async function main() {
     return;
   }
 
+  if (mode === "viewer") {
+    await upsertUserWithRole("e2e_viewer", "E2eViewer123!", false, RoleCode.STATUS_VIEWER);
+    return;
+  }
+
   if (mode === "force-change") {
     const [username, password] = args;
     if (!username || !password) {

@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import "@fontsource-variable/vazirmatn";
 import "./globals.css";
 import { THEME_INIT_SCRIPT } from "@/components/theme/theme-constants";
+import { QueryProvider } from "@/components/providers/query-provider";
 
 export const metadata: Metadata = {
   title: "آرمان حمل — سامانه مدیریت حمل‌ونقل",
@@ -15,7 +16,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <script dangerouslySetInnerHTML={{ __html: THEME_INIT_SCRIPT }} />
       </head>
       <body className="min-h-full antialiased" suppressHydrationWarning>
-        {children}
+        <QueryProvider>{children}</QueryProvider>
       </body>
     </html>
   );

@@ -10,7 +10,7 @@
 |---:|---|---|---|:---:|---|
 | 0 | پیش‌نمایش قابل کلیک و هویت بصری | فرانمای وضعیت و نقشه prototype در موبایل/تبلت/دسکتاپ | DONE | M | اولین فاز اجرایی؛ بدون DB |
 | 1 | اجرای واقعی برنامه، ورود و پوسته محافظت‌شده | ورود واقعی، تغییر رمز و navigation نقش‌محور | DONE | M | — |
-| 2 | ساختار سازمانی چهارسطحی | CRUD واقعی دفاتر و انبارها در نمای درختی | NOT_STARTED | S | — |
+| 2 | ساختار سازمانی چهارسطحی | CRUD واقعی دفاتر و انبارها در نمای درختی | DONE | S | — |
 | 3 | انواع خودرو، نوع بار و ناوگان | صفحه واقعی مدیریت خودرو و آمار آمادگی | NOT_STARTED | S | — |
 | 4 | نقشه داخلی و نمایش دفاتر و انبارها | نقاط سازمانی روی Map Provider داخلی | NOT_STARTED | L | Demo 1؛ بالاترین ریسک فنی (اتصال Provider داخلی) |
 | 5 | مدیریت مسیر، CSV و ترسیم روی نقشه | import/export CSV و ترسیم مسیر با Click/Tap | NOT_STARTED | M | — |
@@ -100,6 +100,23 @@ Offline/network verification: بدون سرویس خارجی؛ session و auth �
 Known limitations: rate limit ورود درون‌حافظه‌ای و per-process است (برای استقرار چندنمونه‌ای باید در Phase 16 با store مشترک جایگزین شود)؛ مدیریت کامل کاربران (ایجاد/غیرفعال‌سازی از UI) در Phase 14 اضافه می‌شود؛ آیتم‌های منوی غیر از داشبورد همچنان غیرفعال («به‌زودی») هستند چون صفحات واقعی آن‌ها ساخته نشده‌اند.
 Deferred items: مدیریت کاربران و نقش‌ها از UI (Phase 14)؛ rate limit مشترک/پایدار (Phase 16).
 Decisions added/changed: ندارد (Prisma 7.9.1 با معماری adapter-based و `prisma.config.ts` به‌کار رفت؛ رمزنگاری رمز عبور با Argon2id طبق پیشنهاد `API_SECURITY_OFFLINE_OPERATIONS.md`؛ بدون ADR جدید)
+
+### Phase 2 — ساختار سازمانی چهارسطحی
+
+Status: DONE
+Started: 2026-08-04
+Completed: 2026-08-05
+Visible output URL: `/organization` (فقط نقش Admin؛ پس از `npm run dev`، `http://localhost:3000`)
+Demo account/data: کاربر Admin از Phase 1 (`SEED_ADMIN_USERNAME`)؛ بدون داده تجاری پیش‌فرض — گره‌ها از UI ساخته می‌شوند.
+Branch/PR/Commit: مستقیم روی `main`
+Migrations: `prisma/migrations/20260804192641_add_organization_unit` — مدل `OrganizationUnit` (enum `OrganizationLevel`، self-relation برای parent/children، createdBy/updatedBy → User)
+Key files: `prisma/schema.prisma`، `src/lib/domain/organization-rules.ts`، `src/lib/validation/organization.ts`، `src/server/services/organization-service.ts`، `src/app/api/v1/organization-units/*`، `src/app/api/v1/organization-tree/route.ts`، `src/app/(dashboard)/organization/page.tsx`، `src/features/organization/*` (tree view، form، history، React Query hooks)، `src/components/ui/sheet.tsx`، `src/components/ui/confirm-dialog.tsx`، `src/components/layout/nav-items.ts` (role-aware nav)
+Tests executed: `npm run typecheck`، `npm run lint`، `npm run test` (۱۹ تست Vitest شامل قواعد سطح/والد و build-tree/جست‌وجو)، `npm run build`، `npx playwright test` (۵۶ تست در ۴ viewport: ایجاد چهارسطحی کامل + ویرایش مختصات + تاریخچه audit، رد سطح/والد نامعتبر و کد تکراری و مختصات نامعتبر، رد حذف گره دارای زیرمجموعه و موفقیت پس از حذف فرزند، رد کامل نقش STATUS_VIEWER از صفحه و API)
+Manual demo steps: ورود Admin؛ ورود به `/organization`؛ ایجاد دفتر کشوری → دفتر گروه → دفتر توزیع‌کننده → دو انبار با «افزودن زیرمجموعه»؛ جست‌وجو بر اساس نام/کد؛ ویرایش مختصات یک انبار؛ بازکردن دوباره ویرایش و مشاهده تاریخچه («ایجاد شد»، «ویرایش شد»).
+Offline/network verification: بدون سرویس خارجی؛ تمام عملیات از طریق API داخلی `/api/v1/organization-*` روی همان شبکه محلی.
+Known limitations: کتابخانه آیکن (`iconAssetId`) در schema پیش‌بینی شده اما UI انتخاب آیکن ندارد (Phase 14)؛ نمایش مختصات فقط عددی است، بدون نقشه واقعی (Phase 4)؛ درخت سازمانی fetch کامل (بدون pagination/lazy loading سمت سرور) — برای مقیاس چندصد گره کافی است، در صورت رشد باید در Phase 16 بازبینی شود؛ دسترسی خواندن (GET) نیز مثل نوشتن فقط Admin است — گسترش به نقش‌های دیگر (مثل Planner برای انتخاب انبار مبدأ) در فاز مربوطه (Phase 7+) اضافه می‌شود.
+Deferred items: انتخاب آیکن گره (Phase 14)، نمایش روی نقشه واقعی (Phase 4)، دسترسی خواندن reference-data برای Planner/Viewer (فاز مصرف‌کننده).
+Decisions added/changed: ندارد؛ اما دو یافته فنی مهم حین این فاز کشف و مستند شد: (۱) `Secure` cookie روی HTTP ساده (127.0.0.1:3100) توسط `page.request` پلی‌رایت—برخلاف مرورگر واقعی—نادیده گرفته می‌شود؛ راه‌حل: env اختیاری `COOKIE_INSECURE` فقط برای اجرای تست/محلی HTTP، پیش‌فرض امن حفظ شد. (۲) فیلتر جست‌وجوی خالی نباید Set خالی برگرداند وگرنه کل درخت پنهان می‌شود — در `organization-tree-view.tsx` اصلاح شد.
 
 ## قاعده تغییر وضعیت به DONE
 

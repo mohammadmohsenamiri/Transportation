@@ -1,9 +1,13 @@
 import { redirect } from "next/navigation";
 import { getCurrentUser } from "@/lib/auth/current-user";
 import { AppShell } from "@/components/layout/app-shell";
-import { authNavItems, authMobileNavItems } from "@/components/layout/nav-items";
-import { roleLabel } from "@/lib/permissions/roles";
+import { authNavItems, authMobileNavItems, type NavItem } from "@/components/layout/nav-items";
+import { hasAnyRole, roleLabel, type RoleCode } from "@/lib/permissions/roles";
 import { logoutAction } from "@/lib/auth/actions";
+
+function filterByRole(items: NavItem[], roles: RoleCode[]): NavItem[] {
+  return items.filter((item) => !item.requiredRoles || hasAnyRole(roles, item.requiredRoles));
+}
 
 export default async function DashboardLayout({ children }: { children: React.ReactNode }) {
   const user = await getCurrentUser();
@@ -18,8 +22,8 @@ export default async function DashboardLayout({ children }: { children: React.Re
 
   return (
     <AppShell
-      navItems={authNavItems}
-      mobileNavItems={authMobileNavItems}
+      navItems={filterByRole(authNavItems, user.roles)}
+      mobileNavItems={filterByRole(authMobileNavItems, user.roles)}
       user={{
         displayName: user.username,
         roleLabel: primaryRole ? roleLabel[primaryRole] : "بدون نقش",

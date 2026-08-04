@@ -19,6 +19,10 @@ export type IconName =
   | "bell"
   | "menu"
   | "chevron-down"
+  | "chevron-left"
+  | "plus"
+  | "pencil"
+  | "trash"
   | "logo";
 
 const paths: Record<IconName, React.ReactNode> = {
@@ -131,6 +135,20 @@ const paths: Record<IconName, React.ReactNode> = {
     </>
   ),
   "chevron-down": <path d="m6 9 6 6 6-6" strokeLinecap="round" strokeLinejoin="round" />,
+  "chevron-left": <path d="m15 6-6 6 6 6" strokeLinecap="round" strokeLinejoin="round" />,
+  plus: <path d="M12 5v14M5 12h14" strokeLinecap="round" />,
+  pencil: (
+    <path
+      d="m4 20 .9-3.6L16.2 5.1a1.5 1.5 0 0 1 2.1 0l.6.6a1.5 1.5 0 0 1 0 2.1L7.6 19.1 4 20Z"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    />
+  ),
+  trash: (
+    <>
+      <path d="M5 7h14M9.5 7V5.5a1.5 1.5 0 0 1 1.5-1.5h2a1.5 1.5 0 0 1 1.5 1.5V7M7 7l.8 12a1.5 1.5 0 0 0 1.5 1.4h5.4a1.5 1.5 0 0 0 1.5-1.4L17 7" strokeLinecap="round" strokeLinejoin="round" />
+    </>
+  ),
   logo: (
     <>
       <rect x="3.5" y="3.5" width="17" height="17" rx="5" />

@@ -6,6 +6,8 @@ export interface AuditEntry {
   action: string;
   entityType: string;
   entityId?: string | null;
+  beforeJson?: Prisma.InputJsonValue;
+  afterJson?: Prisma.InputJsonValue;
   metadataJson?: Prisma.InputJsonValue;
   ipAddress?: string | null;
   userAgent?: string | null;
@@ -18,6 +20,8 @@ export async function logAudit(entry: AuditEntry): Promise<void> {
       action: entry.action,
       entityType: entry.entityType,
       entityId: entry.entityId ?? null,
+      beforeJson: entry.beforeJson,
+      afterJson: entry.afterJson,
       metadataJson: entry.metadataJson,
       ipAddress: entry.ipAddress ?? null,
       userAgent: entry.userAgent ?? null,
