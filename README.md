@@ -16,6 +16,9 @@ Claude پیش از هر تغییر باید اسناد زیر را به‌ترت
 6. [`docs/IMPLEMENTATION_PLAN.md`](./docs/IMPLEMENTATION_PLAN.md)
 7. [`docs/DECISIONS.md`](./docs/DECISIONS.md)
 8. [`docs/PHASE_STATUS.md`](./docs/PHASE_STATUS.md)
+9. [`docs/TEST_ACCEPTANCE.md`](./docs/TEST_ACCEPTANCE.md)
+
+نمونه قالب ورودی مسیر: [`docs/samples/route-template.csv`](./docs/samples/route-template.csv)
 
 ## پشته فنی مبنا
 
