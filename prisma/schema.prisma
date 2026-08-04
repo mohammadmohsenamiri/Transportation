@@ -1,0 +1,78 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum RoleCode {
+  MISSION_PLANNER
+  STATUS_VIEWER
+  ADMIN
+}
+
+model User {
+  id                 String   @id @default(uuid())
+  username           String   @unique
+  passwordHash       String
+  mustChangePassword Boolean  @default(true)
+  isActive           Boolean  @default(true)
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
+
+  roles    UserRole[]
+  sessions Session[]
+}
+
+model Role {
+  id   String   @id @default(uuid())
+  code RoleCode @unique
+  name String
+
+  users UserRole[]
+}
+
+model UserRole {
+  userId     String
+  roleId     String
+  assignedAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  role Role @relation(fields: [roleId], references: [id], onDelete: Cascade)
+
+  @@id([userId, roleId])
+}
+
+model Session {
+  id         String    @id @default(uuid())
+  userId     String
+  secretHash String
+  createdAt  DateTime  @default(now())
+  expiresAt  DateTime
+  revokedAt  DateTime?
+  userAgent  String?
+  ipAddress  String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+}
+
+model AuditLog {
+  id           String   @id @default(uuid())
+  actorUserId  String?
+  action       String
+  entityType   String
+  entityId     String?
+  beforeJson   Json?
+  afterJson    Json?
+  metadataJson Json?
+  ipAddress    String?
+  userAgent    String?
+  occurredAt   DateTime @default(now())
+
+  @@index([entityType, entityId])
+  @@index([actorUserId])
+}

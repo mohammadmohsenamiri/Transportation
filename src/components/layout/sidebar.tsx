@@ -4,10 +4,18 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useState } from "react";
 import { Icon } from "@/components/ui/icons";
-import { navItems } from "@/components/layout/nav-items";
+import type { NavItem } from "@/components/layout/nav-items";
 import { cn } from "@/lib/utils";
 
-function SidebarContent({ collapsed, onNavigate }: { collapsed: boolean; onNavigate?: () => void }) {
+function SidebarContent({
+  items,
+  collapsed,
+  onNavigate,
+}: {
+  items: NavItem[];
+  collapsed: boolean;
+  onNavigate?: () => void;
+}) {
   const pathname = usePathname();
 
   return (
@@ -25,7 +33,7 @@ function SidebarContent({ collapsed, onNavigate }: { collapsed: boolean; onNavig
       </div>
 
       <nav className="flex-1 space-y-1 overflow-y-auto px-2.5 py-3">
-        {navItems.map((item) => {
+        {items.map((item) => {
           const active = item.enabled && pathname?.startsWith(item.href);
           const content = (
             <>
@@ -77,7 +85,7 @@ function SidebarContent({ collapsed, onNavigate }: { collapsed: boolean; onNavig
   );
 }
 
-export function DesktopSidebar() {
+export function DesktopSidebar({ items }: { items: NavItem[] }) {
   const [collapsed, setCollapsed] = useState(false);
 
   return (
@@ -87,7 +95,7 @@ export function DesktopSidebar() {
         collapsed ? "w-[76px]" : "w-64",
       )}
     >
-      <SidebarContent collapsed={collapsed} />
+      <SidebarContent items={items} collapsed={collapsed} />
       <button
         type="button"
         onClick={() => setCollapsed((v) => !v)}
@@ -100,7 +108,15 @@ export function DesktopSidebar() {
   );
 }
 
-export function MobileSidebarDrawer({ open, onClose }: { open: boolean; onClose: () => void }) {
+export function MobileSidebarDrawer({
+  items,
+  open,
+  onClose,
+}: {
+  items: NavItem[];
+  open: boolean;
+  onClose: () => void;
+}) {
   if (!open) return null;
 
   return (
@@ -112,7 +128,7 @@ export function MobileSidebarDrawer({ open, onClose }: { open: boolean; onClose:
         className="absolute inset-0 bg-black/40 backdrop-blur-sm"
       />
       <div className="absolute inset-y-0 start-0 flex w-72 max-w-[85vw] flex-col bg-[var(--color-bg-elevated)] shadow-2xl">
-        <SidebarContent collapsed={false} onNavigate={onClose} />
+        <SidebarContent items={items} collapsed={false} onNavigate={onClose} />
       </div>
     </div>
   );

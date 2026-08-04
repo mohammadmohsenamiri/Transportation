@@ -42,3 +42,11 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+/src/generated/prisma
+
+# فایل‌های راهنمای ابزار (نصب‌شده توسط `prisma init`، symlink به .agents/skills و قابل بازتولید با همان دستور)
+/.agents/
+/.windsurf/
+/.claude/skills/
+/skills-lock.json

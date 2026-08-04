@@ -9,7 +9,7 @@
 | فاز | عنوان | خروجی قابل مشاهده | وضعیت | برآورد حجم | یادداشت |
 |---:|---|---|---|:---:|---|
 | 0 | پیش‌نمایش قابل کلیک و هویت بصری | فرانمای وضعیت و نقشه prototype در موبایل/تبلت/دسکتاپ | DONE | M | اولین فاز اجرایی؛ بدون DB |
-| 1 | اجرای واقعی برنامه، ورود و پوسته محافظت‌شده | ورود واقعی، تغییر رمز و navigation نقش‌محور | NOT_STARTED | M | — |
+| 1 | اجرای واقعی برنامه، ورود و پوسته محافظت‌شده | ورود واقعی، تغییر رمز و navigation نقش‌محور | DONE | M | — |
 | 2 | ساختار سازمانی چهارسطحی | CRUD واقعی دفاتر و انبارها در نمای درختی | NOT_STARTED | S | — |
 | 3 | انواع خودرو، نوع بار و ناوگان | صفحه واقعی مدیریت خودرو و آمار آمادگی | NOT_STARTED | S | — |
 | 4 | نقشه داخلی و نمایش دفاتر و انبارها | نقاط سازمانی روی Map Provider داخلی | NOT_STARTED | L | Demo 1؛ بالاترین ریسک فنی (اتصال Provider داخلی) |
@@ -83,6 +83,23 @@ Offline/network verification: بررسی `read_network_requests` در مرورگ
 Known limitations: نقشه `/prototype/map` کاملاً تزئینی و غیرجغرافیایی است (طبق دامنه فاز)؛ سیکر زمان و فیلترها غیرعملیاتی‌اند؛ آیتم‌های منوی غیرفعال (مأموریت‌ها، مرسوله‌ها، مسیرها، ناوگان، ساختار سازمانی، تنظیمات) با برچسب «به‌زودی» غیرفعال نگه داشته شدند.
 Deferred items: پیاده‌سازی واقعی صفحات فوق در فازهای 1 تا 14 طبق `IMPLEMENTATION_PLAN.md`.
 Decisions added/changed: ندارد (تصمیمات معماری این فاز محدود به انتخاب Next.js 16.3 / React 19.2 پایدار در زمان اجرا بود؛ بدون ADR جدید)
+
+### Phase 1 — اجرای واقعی برنامه، ورود و پوسته محافظت‌شده
+
+Status: DONE
+Started: 2026-08-04
+Completed: 2026-08-04
+Visible output URL: `/login`، `/change-password`، `/dashboard` (پس از `npm run dev`، `http://localhost:3000`)
+Demo account/data: کاربر Admin اولیه از `SEED_ADMIN_USERNAME`/`SEED_ADMIN_PASSWORD` در `.env` توسط `npm run db:seed` ساخته می‌شود؛ بدون داده تجاری پیش‌فرض
+Branch/PR/Commit: مستقیم روی `main`
+Migrations: `prisma/migrations/20260804165252_init` — مدل‌های `User`، `Role`، `UserRole`، `Session`، `AuditLog` و enum `RoleCode`
+Key files: `prisma/schema.prisma`، `prisma/seed.ts`، `prisma.config.ts`، `src/lib/db/prisma.ts`، `src/lib/security/*`، `src/lib/permissions/roles.ts`، `src/lib/auth/*`، `src/lib/http/*`، `src/server/services/*`، `src/app/login/*`، `src/app/change-password/*`، `src/app/(dashboard)/*`، `src/app/api/v1/auth/me/route.ts`، `src/proxy.ts`، `src/components/layout/*` (تعمیم‌یافته برای بازاستفاده)
+Tests executed: `npm run typecheck`، `npm run lint`، `npm run test` (۱۰ تست Vitest شامل هش رمز و session token)، `npm run build`، `npx playwright test` (۴۰ تست در ۴ viewport: ورود موفق/ناموفق، خروج، bypass مستقیم URL به `/dashboard`، bypass مستقیم API به `/api/v1/auth/me`، هدایت خودکار کاربر واردشده از `/login`، تغییر رمز اجباری در اولین ورود و ورود مجدد با رمز جدید)
+Manual demo steps: `npm run db:migrate` و `npm run db:seed`؛ ورود با کاربر Admin موقت؛ هدایت اجباری به `/change-password`؛ تغییر رمز؛ مشاهده `/dashboard` با نام کاربری و نقش واقعی؛ تلاش برای ورود مستقیم به `/dashboard` در حالت خروج (ریدایرکت به `/login`)؛ خروج از حساب.
+Offline/network verification: بدون سرویس خارجی؛ session و auth کاملاً داخل شبکه محلی (PostgreSQL روی همان سیستم) کار می‌کنند.
+Known limitations: rate limit ورود درون‌حافظه‌ای و per-process است (برای استقرار چندنمونه‌ای باید در Phase 16 با store مشترک جایگزین شود)؛ مدیریت کامل کاربران (ایجاد/غیرفعال‌سازی از UI) در Phase 14 اضافه می‌شود؛ آیتم‌های منوی غیر از داشبورد همچنان غیرفعال («به‌زودی») هستند چون صفحات واقعی آن‌ها ساخته نشده‌اند.
+Deferred items: مدیریت کاربران و نقش‌ها از UI (Phase 14)؛ rate limit مشترک/پایدار (Phase 16).
+Decisions added/changed: ندارد (Prisma 7.9.1 با معماری adapter-based و `prisma.config.ts` به‌کار رفت؛ رمزنگاری رمز عبور با Argon2id طبق پیشنهاد `API_SECURITY_OFFLINE_OPERATIONS.md`؛ بدون ADR جدید)
 
 ## قاعده تغییر وضعیت به DONE
 

@@ -46,16 +46,24 @@ Claude پیش از هر تغییر باید اسناد زیر را به‌ترت
 
 ## شروع توسعه
 
-وضعیت فعلی: Phase 0 (پیش‌نمایش قابل کلیک) تکمیل شده؛ هنوز پایگاه‌داده‌ای وجود ندارد.
+وضعیت فعلی: Phase 0 و Phase 1 (ورود واقعی و پوسته محافظت‌شده) تکمیل شده‌اند.
 
 ```bash
 npm install
+cp .env.example .env   # DATABASE_URL، SESSION_SECRET و SEED_ADMIN_* را پر کنید
+npm run db:generate
+npm run db:migrate
+npm run db:seed
 npm run dev
 ```
 
-سپس `http://localhost:3000` را باز کنید؛ به‌صورت خودکار به `/prototype/overview` هدایت می‌شوید. `/prototype/map` نیز در دسترس است. تمام داده‌های این دو صفحه fixture ثابت (`src/demo/fixtures.ts`) هستند، نه داده واقعی.
+سپس `http://localhost:3000` را باز کنید:
 
-فرمان‌های تست و کیفیت موجود در همین فاز:
+- `/login` — ورود واقعی؛ کاربر Admin اولیه از مقادیر `SEED_ADMIN_USERNAME`/`SEED_ADMIN_PASSWORD` در `.env` ساخته می‌شود و در اولین ورود مجبور به تغییر رمز است.
+- `/dashboard` — پوسته محافظت‌شده واقعی؛ بدون session معتبر به `/login` هدایت می‌شود.
+- `/prototype/overview` و `/prototype/map` — همچنان پیش‌نمایش رابط با fixture ثابت (`src/demo/fixtures.ts`) هستند، بدون اتصال به داده واقعی یا session.
+
+فرمان‌های تست و کیفیت:
 
 ```bash
 npm run lint
@@ -63,15 +71,7 @@ npm run typecheck
 npm run test
 npm run test:e2e
 npm run build
-```
-
-از Phase 1 به بعد، فرمان‌های مرتبط با Prisma/PostgreSQL اضافه می‌شوند:
-
-```bash
-cp .env.example .env
-npm run db:generate
-npm run db:migrate -- --name init
-npm run db:seed
+npm run db:format
 ```
 
 هیچ secret، فایل `.env`، کلید Provider نقشه یا credential پایگاه داده نباید commit شود.
