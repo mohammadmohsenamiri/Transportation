@@ -1,0 +1,188 @@
+@import "tailwindcss";
+
+:root {
+  color-scheme: light;
+
+  --color-bg: #f3f5fb;
+  --color-bg-elevated: #ffffff;
+  --color-bg-sunken: #e8ebf5;
+  --color-panel: #ffffff;
+  --color-panel-border: rgba(15, 23, 42, 0.08);
+  --color-panel-glow: rgba(59, 130, 246, 0.08);
+
+  --color-text: #0f172a;
+  --color-text-muted: #5b6478;
+  --color-text-subtle: #8891a5;
+
+  --color-primary: #2f6fed;
+  --color-primary-foreground: #ffffff;
+  --color-accent: #14b8c4;
+
+  --color-success: #16a34a;
+  --color-warning: #d97706;
+  --color-danger: #dc2626;
+  --color-info: #0284c7;
+  --color-purple: #7c3aed;
+
+  --color-success-bg: rgba(22, 163, 74, 0.12);
+  --color-warning-bg: rgba(217, 119, 6, 0.12);
+  --color-danger-bg: rgba(220, 38, 38, 0.12);
+  --color-info-bg: rgba(2, 132, 199, 0.12);
+  --color-purple-bg: rgba(124, 58, 237, 0.12);
+  --color-primary-bg: rgba(47, 111, 237, 0.1);
+
+  --shadow-panel: 0 1px 2px rgba(15, 23, 42, 0.04), 0 8px 24px rgba(15, 23, 42, 0.04);
+}
+
+:root[data-theme="dark"] {
+  color-scheme: dark;
+
+  --color-bg: #070b16;
+  --color-bg-elevated: #0d1424;
+  --color-bg-sunken: #060a13;
+  --color-panel: rgba(17, 25, 45, 0.72);
+  --color-panel-border: rgba(148, 163, 184, 0.14);
+  --color-panel-glow: rgba(56, 189, 248, 0.12);
+
+  --color-text: #e7ebf7;
+  --color-text-muted: #99a3ba;
+  --color-text-subtle: #6b7690;
+
+  --color-primary: #3b82f6;
+  --color-primary-foreground: #f8fafc;
+  --color-accent: #22d3ee;
+
+  --color-success: #22c55e;
+  --color-warning: #f59e0b;
+  --color-danger: #f87171;
+  --color-info: #38bdf8;
+  --color-purple: #a78bfa;
+
+  --color-success-bg: rgba(34, 197, 94, 0.16);
+  --color-warning-bg: rgba(245, 158, 11, 0.16);
+  --color-danger-bg: rgba(248, 113, 113, 0.16);
+  --color-info-bg: rgba(56, 189, 248, 0.16);
+  --color-purple-bg: rgba(167, 139, 250, 0.16);
+  --color-primary-bg: rgba(59, 130, 246, 0.16);
+
+  --shadow-panel: 0 1px 2px rgba(0, 0, 0, 0.3), 0 12px 32px rgba(0, 0, 0, 0.35);
+}
+
+@theme inline {
+  --font-sans: "Vazirmatn Variable", ui-sans-serif, system-ui, sans-serif;
+
+  --color-bg: var(--color-bg);
+  --color-bg-elevated: var(--color-bg-elevated);
+  --color-bg-sunken: var(--color-bg-sunken);
+  --color-panel: var(--color-panel);
+  --color-panel-border: var(--color-panel-border);
+  --color-panel-glow: var(--color-panel-glow);
+
+  --color-text: var(--color-text);
+  --color-text-muted: var(--color-text-muted);
+  --color-text-subtle: var(--color-text-subtle);
+
+  --color-primary: var(--color-primary);
+  --color-primary-foreground: var(--color-primary-foreground);
+  --color-accent: var(--color-accent);
+
+  --color-success: var(--color-success);
+  --color-warning: var(--color-warning);
+  --color-danger: var(--color-danger);
+  --color-info: var(--color-info);
+  --color-purple: var(--color-purple);
+
+  --color-success-bg: var(--color-success-bg);
+  --color-warning-bg: var(--color-warning-bg);
+  --color-danger-bg: var(--color-danger-bg);
+  --color-info-bg: var(--color-info-bg);
+  --color-purple-bg: var(--color-purple-bg);
+  --color-primary-bg: var(--color-primary-bg);
+}
+
+* {
+  border-color: var(--color-panel-border);
+}
+
+html {
+  height: 100%;
+}
+
+body {
+  min-height: 100%;
+  background: var(--color-bg);
+  color: var(--color-text);
+  font-family: var(--font-sans);
+  transition: background-color 200ms ease, color 200ms ease;
+}
+
+body,
+input,
+textarea,
+select,
+button {
+  font-size: 15px;
+}
+
+@media (min-width: 1024px) {
+
+  body,
+  input,
+  textarea,
+  select,
+  button {
+    font-size: 14px;
+  }
+}
+
+p,
+.text-body {
+  line-height: 1.7;
+}
+
+.tabular-nums {
+  font-variant-numeric: tabular-nums;
+}
+
+.ltr-inline {
+  direction: ltr;
+  unicode-bidi: isolate;
+}
+
+.theme-icon-dark {
+  display: none;
+}
+
+:root[data-theme="dark"] .theme-icon-light {
+  display: none;
+}
+
+:root[data-theme="dark"] .theme-icon-dark {
+  display: block;
+}
+
+@media (prefers-reduced-motion: reduce) {
+
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--color-panel-border);
+  border-radius: 999px;
+}

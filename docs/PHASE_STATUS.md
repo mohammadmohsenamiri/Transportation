@@ -8,7 +8,7 @@
 
 | فاز | عنوان | خروجی قابل مشاهده | وضعیت | برآورد حجم | یادداشت |
 |---:|---|---|---|:---:|---|
-| 0 | پیش‌نمایش قابل کلیک و هویت بصری | فرانمای وضعیت و نقشه prototype در موبایل/تبلت/دسکتاپ | NOT_STARTED | M | اولین فاز اجرایی؛ بدون DB |
+| 0 | پیش‌نمایش قابل کلیک و هویت بصری | فرانمای وضعیت و نقشه prototype در موبایل/تبلت/دسکتاپ | DONE | M | اولین فاز اجرایی؛ بدون DB |
 | 1 | اجرای واقعی برنامه، ورود و پوسته محافظت‌شده | ورود واقعی، تغییر رمز و navigation نقش‌محور | NOT_STARTED | M | — |
 | 2 | ساختار سازمانی چهارسطحی | CRUD واقعی دفاتر و انبارها در نمای درختی | NOT_STARTED | S | — |
 | 3 | انواع خودرو، نوع بار و ناوگان | صفحه واقعی مدیریت خودرو و آمار آمادگی | NOT_STARTED | S | — |
@@ -66,6 +66,23 @@ Known limitations:
 Deferred items:
 Decisions added/changed:
 ```
+
+### Phase 0 — پیش‌نمایش قابل کلیک و هویت بصری
+
+Status: DONE
+Started: 2026-08-04
+Completed: 2026-08-04
+Visible output URL: `/prototype/overview`، `/prototype/map` (پس از `npm run dev`، آدرس محلی `http://localhost:3000`؛ `/` به‌صورت خودکار به `/prototype/overview` هدایت می‌شود)
+Demo account/data: بدون حساب کاربری؛ داده‌ها fixture ثابت در `src/demo/fixtures.ts` با برچسب «پیش‌نمایش رابط»
+Branch/PR/Commit: مستقیم روی `main`
+Migrations: ندارد (بدون DB در این فاز)
+Key files: `src/app/layout.tsx`، `src/app/globals.css`، `src/app/prototype/*`، `src/components/layout/*`، `src/components/theme/*`، `src/components/ui/*`، `src/components/map/*`، `src/components/data-table/mission-table.tsx`، `src/demo/fixtures.ts`، `src/app/api/v1/health/route.ts`
+Tests executed: `npm run typecheck`، `npm run lint`، `npm run test` (۴ تست Vitest)، `npm run build`، `npx playwright test` (۱۲ تست در ۴ viewport: 360/768/1024/1440 — همه موفق پس از تغییر webServer به build+start برای حذف race شرط hydration روی dev server)
+Manual demo steps: اجرای `npm run dev`؛ ورود به `/prototype/overview`؛ تغییر theme با دکمه بالای هدر؛ تغییر عرض مرورگر بین 360 تا 1440؛ ورود به `/prototype/map`؛ کلیک روی marker خودرو برای باز شدن کارت جزئیات؛ کلیک دکمه پخش سیکر زمان برای مشاهده حرکت نمایشی نوار زمان.
+Offline/network verification: بررسی `read_network_requests` در مرورگر نشان داد تمام درخواست‌ها (فونت Vazirmatn به‌صورت woff2، chunkهای JS/CSS) فقط به `localhost` هستند؛ هیچ درخواستی به CDN یا دامنه خارجی ارسال نشد.
+Known limitations: نقشه `/prototype/map` کاملاً تزئینی و غیرجغرافیایی است (طبق دامنه فاز)؛ سیکر زمان و فیلترها غیرعملیاتی‌اند؛ آیتم‌های منوی غیرفعال (مأموریت‌ها، مرسوله‌ها، مسیرها، ناوگان، ساختار سازمانی، تنظیمات) با برچسب «به‌زودی» غیرفعال نگه داشته شدند.
+Deferred items: پیاده‌سازی واقعی صفحات فوق در فازهای 1 تا 14 طبق `IMPLEMENTATION_PLAN.md`.
+Decisions added/changed: ندارد (تصمیمات معماری این فاز محدود به انتخاب Next.js 16.3 / React 19.2 پایدار در زمان اجرا بود؛ بدون ADR جدید)
 
 ## قاعده تغییر وضعیت به DONE
 

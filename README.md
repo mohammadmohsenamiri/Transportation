@@ -46,15 +46,32 @@ Claude پیش از هر تغییر باید اسناد زیر را به‌ترت
 
 ## شروع توسعه
 
-پس از تکمیل فاز Bootstrap، فرمان‌های مورد انتظار:
+وضعیت فعلی: Phase 0 (پیش‌نمایش قابل کلیک) تکمیل شده؛ هنوز پایگاه‌داده‌ای وجود ندارد.
 
 ```bash
 npm install
+npm run dev
+```
+
+سپس `http://localhost:3000` را باز کنید؛ به‌صورت خودکار به `/prototype/overview` هدایت می‌شوید. `/prototype/map` نیز در دسترس است. تمام داده‌های این دو صفحه fixture ثابت (`src/demo/fixtures.ts`) هستند، نه داده واقعی.
+
+فرمان‌های تست و کیفیت موجود در همین فاز:
+
+```bash
+npm run lint
+npm run typecheck
+npm run test
+npm run test:e2e
+npm run build
+```
+
+از Phase 1 به بعد، فرمان‌های مرتبط با Prisma/PostgreSQL اضافه می‌شوند:
+
+```bash
 cp .env.example .env
 npm run db:generate
 npm run db:migrate -- --name init
 npm run db:seed
-npm run dev
 ```
 
 هیچ secret، فایل `.env`، کلید Provider نقشه یا credential پایگاه داده نباید commit شود.
