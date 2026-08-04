@@ -20,6 +20,8 @@ Claude پیش از هر تغییر باید اسناد زیر را به‌ترت
 
 نمونه قالب ورودی مسیر: [`docs/samples/route-template.csv`](./docs/samples/route-template.csv)
 
+ماک‌آپ‌های مرجع طراحی: [`docs/mockups/`](./docs/mockups/README.md)
+
 ## پشته فنی مبنا
 
 - Next.js App Router و TypeScript با حالت strict
