@@ -1,24 +1,38 @@
 # وضعیت فازهای پیاده‌سازی
 
-آخرین به‌روزرسانی اولیه: 2026-08-04
+آخرین به‌روزرسانی: 2026-08-04
 
-| فاز | عنوان | وضعیت | یادداشت |
-|---:|---|---|---|
-| 0 | Bootstrap و قراردادهای پایه | NOT_STARTED | اولین فاز اجرایی |
-| 1 | PostgreSQL، Auth، RBAC و Audit | NOT_STARTED | — |
-| 2 | Design System و Shell | NOT_STARTED | — |
-| 3 | ساختار سازمانی چهارسطحی | NOT_STARTED | — |
-| 4 | Catalogها، خودرو و آیکن | NOT_STARTED | — |
-| 5 | Provider نقشه و Map Foundation | NOT_STARTED | — |
-| 6 | Route Management | NOT_STARTED | — |
-| 7 | Shipment Management | NOT_STARTED | — |
-| 8 | Mission Planning | NOT_STARTED | — |
-| 9 | Position Engine و Time Reconstruction | NOT_STARTED | — |
-| 10 | Map Operations Workspace | NOT_STARTED | — |
-| 11 | Time Scrubber | NOT_STARTED | — |
-| 12 | فرانمای وضعیت | NOT_STARTED | — |
-| 13 | Hardening، عملیات و ظرفیت | NOT_STARTED | — |
-| 14 | UAT و Release Candidate | NOT_STARTED | — |
+## خلاصه وضعیت
+
+| فاز | عنوان | خروجی قابل مشاهده | وضعیت | یادداشت |
+|---:|---|---|---|---|
+| 0 | پیش‌نمایش قابل کلیک و هویت بصری | فرانمای وضعیت و نقشه prototype در موبایل/تبلت/دسکتاپ | NOT_STARTED | اولین فاز اجرایی؛ بدون DB |
+| 1 | اجرای واقعی برنامه، ورود و پوسته محافظت‌شده | ورود واقعی، تغییر رمز و navigation نقش‌محور | NOT_STARTED | — |
+| 2 | ساختار سازمانی چهارسطحی | CRUD واقعی دفاتر و انبارها در نمای درختی | NOT_STARTED | — |
+| 3 | انواع خودرو، نوع بار و ناوگان | صفحه واقعی مدیریت خودرو و آمار آمادگی | NOT_STARTED | — |
+| 4 | نقشه داخلی و نمایش دفاتر و انبارها | نقاط سازمانی روی Map Provider داخلی | NOT_STARTED | Demo 1 |
+| 5 | مدیریت مسیر، CSV و ترسیم روی نقشه | import/export CSV و ترسیم مسیر با Click/Tap | NOT_STARTED | — |
+| 6 | تعریف مرسوله و مقصد | ثبت مرسوله و preview مبدأ/مقصد روی نقشه | NOT_STARTED | — |
+| 7 | برنامه‌ریزی مأموریت از فرم | ساخت Draft، تخمین و انتشار مأموریت | NOT_STARTED | — |
+| 8 | تعریف مأموریت از داخل نقشه | ساخت و انتشار مأموریت بدون ترک نقشه | NOT_STARTED | Demo 2 |
+| 9 | موتور موقعیت تقریبی و آزمایشگاه شبیه‌سازی | حرکت یک مأموریت در زمان انتخابی | NOT_STARTED | — |
+| 10 | نقشه عملیاتی پایه و حرکت خودروها | خودروهای مأموریت‌دار در موقعیت تقریبی روی نقشه | NOT_STARTED | Demo 3 |
+| 11 | جدول مأموریت، انتخاب متقابل و فیلترها | همگام‌سازی نقشه/جدول و فیلترهای عملیاتی | NOT_STARTED | — |
+| 12 | سیکر زمان زنده و تاریخی | بازسازی وضعیت ناوگان در زمان دلخواه | NOT_STARTED | — |
+| 13 | فرانمای وضعیت مدیریتی | KPIهای واقعی و drill-down | NOT_STARTED | Demo 4 |
+| 14 | مدیریت کاربران، آیکن‌ها و تنظیمات تکمیلی | کاربران، نقش‌ها، آیکن سفارشی و audit viewer | NOT_STARTED | — |
+| 15 | ریسپانسیو، Touch و دسترس‌پذیری نهایی | اجرای کامل جریان‌ها روی موبایل و تبلت | NOT_STARTED | — |
+| 16 | اجرای بدون اینترنت، امنیت، عملیات و ظرفیت | نسخه production قابل اجرا فقط در LAN | NOT_STARTED | — |
+| 17 | UAT و Release Candidate | نسخه قابل نصب، راهنما، گزارش UAT و rollback | NOT_STARTED | Release Candidate |
+
+## نقاط تحویل
+
+- **Demo 0 — Phase 0:** ظاهر و ساختار کامل محصول قابل مشاهده است.
+- **Demo 1 — Phase 4:** کاربر وارد می‌شود، دفاتر و خودروها را مدیریت می‌کند و نقاط را روی نقشه داخلی می‌بیند.
+- **Demo 2 — Phase 8:** مسیر، مرسوله و مأموریت از فرم و نقشه ساخته می‌شوند.
+- **Demo 3 — Phase 10:** حرکت تقریبی خودروهای واقعی مأموریت روی نقشه نمایش داده می‌شود.
+- **Demo 4 — Phase 13:** نقشه عملیاتی، timeline و داشبورد مدیریتی قابل ارائه‌اند.
+- **Release Candidate — Phase 17:** نسخه برای UAT و استقرار شبکه داخلی آماده است.
 
 ## مقادیر مجاز وضعیت
 
@@ -27,22 +41,36 @@
 - `BLOCKED`
 - `DONE`
 
-## قالب به‌روزرسانی فاز
+فقط یک فاز می‌تواند در یک زمان `IN_PROGRESS` باشد. شروع فاز بعد پیش از `DONE` شدن فاز جاری، جز در branch آزمایشی بدون merge، مجاز نیست.
 
-برای هر فاز، زیر جدول بخشی با موارد زیر اضافه شود:
+## قالب به‌روزرسانی هر فاز
+
+برای هر فاز، زیر این بخش یک رکورد با قالب زیر اضافه شود:
 
 ```text
 ### Phase N — <title>
 Status:
 Started:
 Completed:
+Visible output URL:
+Demo account/data:
 Branch/PR/Commit:
 Migrations:
 Key files:
 Tests executed:
-Manual verification:
+Manual demo steps:
+Offline/network verification:
 Known limitations:
+Deferred items:
 Decisions added/changed:
 ```
 
-فاز فقط پس از گذر از Definition of Done در `CLAUDE.md` به `DONE` تغییر می‌کند.
+## قاعده تغییر وضعیت به DONE
+
+فاز فقط زمانی `DONE` است که:
+
+1. خروجی قابل مشاهده تعریف‌شده واقعاً در دسترس باشد؛
+2. سناریوی نمایش دستی با موفقیت اجرا شده باشد؛
+3. Definition of Done در `CLAUDE.md` رعایت شده باشد؛
+4. تست‌ها، migration، محدودیت‌ها و مسیر مشاهده در همین سند ثبت شده باشند؛
+5. feature ناقص یا دکمه ظاهراً فعال از فازهای بعد باقی نمانده باشد.
