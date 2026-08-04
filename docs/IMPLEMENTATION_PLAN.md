@@ -1,150 +1,671 @@
 # برنامه فازبندی پیاده‌سازی برای Claude
 
-## روش اجرا
+## هدف این فازبندی
 
-- فقط یک فاز در هر branch/PR یا تغییر مستقل.
-- قبل از شروع، `PHASE_STATUS.md` و تصمیمات را بخوان.
-- معیارهای خروج همان فاز را کامل کن؛ سپس status، تصمیمات جدید و دستورهای تست را ثبت کن.
-- feature ناقص را پشت UI ظاهراً فعال قرار نده؛ در صورت نیاز feature flag داخلی و label واضح استفاده شود.
+این برنامه به‌جای اجرای چند فاز زیرساختیِ طولانی پیش از مشاهده محصول، از **برش‌های عمودی کوچک، قابل نمایش و قابل آزمون** استفاده می‌کند. پایان هر فاز باید یک مسیر مشخص در سامانه، یک سناریوی نمایشی و یک نتیجه قابل مشاهده برای مالک محصول داشته باشد.
 
-## Phase 0 — Bootstrap و قراردادهای پایه
+اصل کلیدی:
 
-### خروجی
+> هر فاز باید چیزی را که کاربر بتواند ببیند، لمس کند یا با داده واقعی آزمایش کند تحویل دهد؛ زیرساخت صرف به‌تنهایی خروجی فاز محسوب نمی‌شود.
 
-- Next.js App Router + TypeScript strict + React + Tailwind
-- ESLint/Prettier، aliasها، ساختار پوشه
-- Vazirmatn local، `lang=fa`, `dir=rtl`
-- theme روشن/تیره با tokenها و persistence
-- Vitest و Playwright skeleton
-- `.env.example`, `.gitignore`, health endpoint و README commands
-- CI محلی/گیت‌هاب برای lint، typecheck، test و build در صورت دسترسی
+---
 
-### پذیرش
+## قرارداد اجرای فاز توسط Claude
 
-صفحه پایه در 360/768/1440، RTL و هر دو theme کار کند و runtime request خارجی نداشته باشد.
+Claude در هر نوبت فقط یک فاز را اجرا می‌کند و باید قواعد زیر را رعایت کند:
 
-## Phase 1 — PostgreSQL، Prisma، Auth، RBAC و Audit
+1. پیش از کدنویسی، `CLAUDE.md`، این سند، `DECISIONS.md` و `PHASE_STATUS.md` را بخواند.
+2. در ابتدای کار، محدوده فاز را با فهرست فایل‌ها، migration احتمالی و تست‌های مورد انتظار مشخص کند.
+3. یک فاز ترجیحاً بیش از موارد زیر نداشته باشد:
+   - یک قابلیت اصلی کسب‌وکاری؛
+   - حداکثر دو صفحه اصلی یا یک صفحه پیچیده؛
+   - حداکثر یک migration اصلی؛
+   - یک تعامل پیچیده مانند نقشه، CSV یا timeline.
+4. اگر فاز در عمل بزرگ‌تر شد، آن را به زیر‌فازهای `A` و `B` تقسیم کند؛ اجرای هم‌زمان چند فاز ممنوع است.
+5. داده نمایشی فقط در profile توسعه یا seed دمو باشد و نباید در production seed وارد شود.
+6. قابلیت آینده با دکمه ظاهراً فعال شبیه‌سازی نشود. موارد آماده‌نشده یا نمایش داده نشوند یا صریحاً با برچسب «در دست توسعه» غیرفعال باشند.
+7. در پایان هر فاز این موارد ارائه شوند:
+   - مسیر مشاهده خروجی؛
+   - حساب یا داده لازم برای دمو؛
+   - سناریوی دستی کوتاه؛
+   - فرمان‌های تست اجراشده؛
+   - محدودیت‌های شناخته‌شده؛
+   - به‌روزرسانی `PHASE_STATUS.md`.
+8. هر فاز باید مستقل، قابل commit، قابل rollback و بدون نیاز به کد نیمه‌تمام فاز بعدی باشد.
 
-- Prisma و migration اولیه
-- User/Role/UserRole/Session/AuditLog
-- seed فقط roleهای سیستمی و Admin اولیه از env؛ بدون داده business خودرو/دفتر
-- login/logout/change password/first login
-- protected routes و permission service
-- audit service و testهای bypass API
+---
 
-## Phase 2 — Design System و Shell
+## نقاط تحویل قابل ارائه
 
-- Button/Input/Select/Combobox/DateTime/Modal/Sheet/Toast/Badge/Table/Empty/Error/Skeleton
-- dashboard shell، sidebar role-based، header و responsive navigation
-- Jalali date-time picker با storage UTC
-- touch target و accessibility baseline
-- صفحات placeholder فقط برای فازهای نزدیک و با label «در دست توسعه»، نه feature جعلی
+| نقطه تحویل | پس از فاز | چیزی که قابل ارائه است |
+|---|---:|---|
+| Demo 0 | 0 | پیش‌نمایش کامل ظاهر آینده‌نگر، RTL و قابل کلیک |
+| Demo 1 | 4 | ورود، مدیریت دفاتر و خودروها، نمایش نقاط واقعی روی نقشه داخلی |
+| Demo 2 | 8 | تعریف مسیر، مرسوله و مأموریت واقعی از فرم و نقشه |
+| Demo 3 | 10 | نمایش حرکت تقریبی خودروهای مأموریت‌دار روی نقشه |
+| Demo 4 | 13 | نقشه عملیاتی کامل، سیکر زمان و فرانمای وضعیت |
+| Release Candidate | 17 | نسخه آماده UAT و استقرار شبکه داخلی |
 
-## Phase 3 — ساختار سازمانی چهارسطحی
+---
 
-- مدل و CRUD OrganizationUnit
-- tree view، search، create/edit sheet و map coordinate picker
-- validation parent level/cycle/soft delete
-- marker preview و icon assignment
-- permission و audit test
+# فازهای اجرایی
 
-## Phase 4 — Catalogها، خودرو و آیکن
+## Phase 0 — پیش‌نمایش قابل کلیک و هویت بصری
 
-- VehicleType و CargoType بدون seed business
-- Vehicle CRUD، readiness، validation عددی و overlap-ready query
-- IconAsset upload/sanitize/library
-- filter و pagination server-side
-- صفحات touch و responsive
+### هدف
 
-## Phase 5 — Provider نقشه و Map Foundation
+ایجاد یک خروجی فوری که زبان طراحی، ساختار صفحات و تجربه موبایل/تبلت/دسکتاپ را بدون انتظار برای پایگاه داده نشان دهد.
 
-- MapLibre GL JS lazy client component
-- Provider abstraction و Admin settings
-- internal TMS/XYZ و external XYZ optional
-- local asset bundling، CSP، health test و fallback provider
-- نمایش دفاتر/انبارها، layer toggle، clustering و fit bounds
-- تست قطع اینترنت با Provider داخلی
+### دامنه پیاده‌سازی
 
-## Phase 6 — Route Management
+- Bootstrap پروژه با Next.js App Router، TypeScript strict و Tailwind.
+- فونت Vazirmatn به‌صورت local/package، `lang="fa"` و `dir="rtl"`.
+- tokenهای طراحی، theme روشن/تیره و ذخیره انتخاب theme.
+- shell آینده‌نگر شامل header، sidebar، navigation موبایل و command area.
+- صفحات پیش‌نمایش:
+  - `/prototype/overview` برای فرانمای وضعیت؛
+  - `/prototype/map` برای نقشه نمایشی، جدول مأموریت‌ها و سیکر زمان غیرعملیاتی.
+- fixtureهای ثابت فقط در `src/demo` یا محل مشابه و با برچسب واضح «پیش‌نمایش رابط».
+- پایه Vitest، Playwright، ESLint، Prettier، typecheck و build.
+- `.env.example`، `.gitignore` و endpoint سلامت پایه.
 
-- Route/RoutePoint models و versioning
-- CSV preview/validation/confirm/export
-- route drawing با click/tap، undo/redo/finish
-- محاسبه distance و cumulative distance
-- list/detail/duplicate/deactivate
-- unit test برای Haversine، sequence، duplicate و boundary coordinates
+### خروجی قابل مشاهده
 
-## Phase 7 — Shipment Management
+کاربر می‌تواند ظاهر اصلی سامانه، کارت‌های KPI، چیدمان نقشه، جدول کنار نقشه، پنل فیلتر، modalها، حالت موبایل و themeها را ببیند و بین صفحات حرکت کند.
 
-- Shipment model و CargoType integration
-- tracking code generation
-- فرم مقصد سازمانی یا مختصات آزاد
-- lifecycle ابتدایی، list/filter/detail/history
-- جلوگیری از تغییر ناسازگار مبدأ/مقصد پس از مأموریت فعال
+### سناریوی نمایش
 
-## Phase 8 — Mission Planning
+1. اجرای `npm run dev`.
+2. ورود به `/prototype/overview`.
+3. تغییر theme، تغییر عرض مرورگر و ورود به `/prototype/map`.
+4. بازکردن پنل جزئیات یک خودرو نمایشی و حرکت کنترل نمایشی timeline.
 
-- Mission/MissionShipment schema
-- create form مستقل و wizard داخل map
-- vehicle availability و overlap detection
-- route موجود/import/drawing/direct fallback
-- estimate endpoint برای distance/ETA/fuel
-- draft، publish، cancel، duplicate
-- snapshot speed/origin/destination/route version و transaction کامل
+### معیار پذیرش
 
-## Phase 9 — Position Engine و Time Reconstruction
+- در عرض‌های 360، 768، 1024 و 1440 قابل استفاده باشد.
+- تمام متن‌ها فارسی و RTL باشند.
+- هیچ درخواست runtime به CDN یا اینترنت ارسال نشود.
+- عناصر پیش‌نمایش با قابلیت واقعی اشتباه گرفته نشوند.
 
-- تابع pure مشترک domain برای position/progress/ETA/status
-- route interpolation و direct dashed fallback
-- تست‌های مرزی قبل شروع، لحظه شروع، وسط segment، ETA، بعد ETA، cancel، مسیر صفر/نامعتبر
-- server/client parity test
-- `/map/scene` و lazy geometry endpoint
-- جلوگیری از persist موقعیت در tick
+### خارج از دامنه
 
-## Phase 10 — Map Operations Workspace
+پایگاه داده، ورود واقعی، CRUD و نقشه واقعی.
 
-- vehicle markers و direction bearing
-- sync انتخاب map/table با `selectedMissionId`
-- detail card، route highlight، origin/destination highlight
-- فیلترهای مبدأ، مقصد، نوع خودرو، status، start/ETA و search
-- context action روی مبدأ/مقصد
-- virtualized mission table
-- mobile bottom sheets و tablet drawer
+---
 
-## Phase 11 — Time Scrubber
+## Phase 1 — اجرای واقعی برنامه، ورود و پوسته محافظت‌شده
 
-- Live/Historical state machine
-- Jalali day selection، slider، play/pause، step، return to live
-- client position animation و reduced motion
-- query window management و timezone tests
-- badge واضح حالت تاریخی و label تقریبی
+### هدف
 
-## Phase 12 — فرانمای وضعیت
+تبدیل پیش‌نمایش به یک برنامه واقعی قابل ورود و آماده توسعه تدریجی.
 
-- KPI query service با تعریف واحد
-- کارت‌های خودرو، مرسوله و مأموریت
-- chartهای وضعیت، نوع خودرو، روند و هشدار
-- filter بازه، drill-down و timestamp
-- cache داخلی کوتاه‌عمر اختیاری بدون stale مبهم
+### دامنه پیاده‌سازی
 
-## Phase 13 — Hardening، عملیات و ظرفیت
+- PostgreSQL و Prisma با migration اولیه.
+- مدل‌های `User`, `Role`, `UserRole`, `Session`, `AuditLog`.
+- roleهای اولیه: `MISSION_PLANNER`, `STATUS_VIEWER`, `ADMIN`.
+- Admin اولیه از environment؛ بدون داده تجاری پیش‌فرض.
+- ورود با رمز عبور، خروج، تغییر رمز اجباری در اولین ورود و session امن HttpOnly.
+- routeهای محافظت‌شده و permission service سمت server.
+- dashboard shell واقعی با navigation مبتنی بر نقش.
+- صفحات خطای مجوز و session expiration.
 
-- تست کامل RBAC، CSRF، XSS، upload، URL provider و audit
-- offline acceptance test و production Docker/operations guide
-- backup/restore scripts و health/readiness
-- database indexes، map payload budget، load test
-- Playwright matrix در desktop/tablet/mobile و touch
-- accessibility، RTL visual regression و reduced motion
+### خروجی قابل مشاهده
 
-## Phase 14 — UAT و Release Candidate
+صفحه ورود واقعی، ورود Admin، dashboard محافظت‌شده و تفاوت navigation برای نقش‌ها.
 
-- اجرای سناریوهای end-to-end سند تست
-- اصلاح blockerها بدون افزودن feature جدید
-- seed demo فقط در profile توسعه و جدا از production seed
-- راهنمای کاربر/Admin داخل repo
-- release checklist، migration/rollback و sign-off مالک محصول
+### سناریوی نمایش
 
-## فرمان‌های استاندارد مورد انتظار
+1. اجرای migration و seed.
+2. ورود با Admin اولیه.
+3. تغییر رمز در اولین ورود.
+4. مشاهده dashboard و آزمایش جلوگیری از ورود مستقیم به route غیرمجاز.
+
+### معیار پذیرش
+
+- bypass از طریق URL یا API ممکن نباشد.
+- password hash و session امن باشند.
+- login، logout و protected navigation در Playwright پوشش داده شوند.
+
+### خارج از دامنه
+
+مدیریت کامل کاربران، دفاتر و خودروها.
+
+---
+
+## Phase 2 — ساختار سازمانی چهارسطحی
+
+### هدف
+
+تحویل نخستین قابلیت واقعی کسب‌وکاری با داده پایدار.
+
+### دامنه پیاده‌سازی
+
+- مدل `OrganizationUnit` با سطوح:
+  1. دفتر کشوری؛
+  2. دفتر گروه؛
+  3. دفتر توزیع‌کننده؛
+  4. انبار.
+- CRUD، soft delete، audit و permission.
+- اعتبارسنجی سطح والد، جلوگیری از cycle و جلوگیری از حذف رکورد دارای وابستگی.
+- نمای درختی، جست‌وجو و فرم create/edit در Sheet.
+- ورود latitude/longitude دستی و preview ساده مختصات.
+- pagination یا lazy loading مناسب برای درخت بزرگ.
+
+### خروجی قابل مشاهده
+
+Admin می‌تواند ساختار چهارسطحی واقعی بسازد و درخت سازمانی را روی موبایل و دسکتاپ مشاهده کند.
+
+### سناریوی نمایش
+
+ایجاد دفتر کشوری، یک دفتر گروه، یک توزیع‌کننده و دو انبار؛ سپس ویرایش مختصات و مشاهده تاریخچه audit.
+
+### معیار پذیرش
+
+سطح نامعتبر، cycle، مختصات نامعتبر و دسترسی نقش غیرAdmin رد شوند.
+
+---
+
+## Phase 3 — انواع خودرو، نوع بار و ناوگان
+
+### هدف
+
+ایجاد catalogهای قابل تنظیم و صفحه واقعی مدیریت ناوگان.
+
+### دامنه پیاده‌سازی
+
+- مدل‌های `VehicleType`, `CargoType`, `Vehicle`.
+- هیچ نوع خودرو یا نوع بار تجاری به‌صورت hardcoded یا seed اجباری نباشد.
+- مشخصات خودرو:
+  - نوع خودرو؛
+  - شماره شناسه یکتا؛
+  - ظرفیت باک؛
+  - مصرف متوسط در 100 کیلومتر؛
+  - سرعت متوسط؛
+  - وضعیت `READY` یا `OUT_OF_SERVICE`.
+- CRUD، فیلتر، جست‌وجو، pagination و audit.
+- اعتبارسنجی مقادیر عددی و شناسه تکراری.
+- کارت خلاصه ناوگان در بالای صفحه.
+
+### خروجی قابل مشاهده
+
+Admin انواع خودرو و بار را تعریف می‌کند و ناوگان واقعی با وضعیت آمادگی در جدول/کارت نمایش داده می‌شود.
+
+### سناریوی نمایش
+
+تعریف «کامیونت» و «وانت»، ثبت سه خودرو، خارج‌کردن یکی از سرویس و مشاهده تغییر آمار آماده‌به‌کار.
+
+### معیار پذیرش
+
+مقادیر منفی، شناسه تکراری و حذف نوع استفاده‌شده مدیریت شوند.
+
+---
+
+## Phase 4 — نقشه داخلی و نمایش دفاتر و انبارها
+
+### هدف
+
+نمایش اولین نقشه واقعی سامانه با داده‌های فازهای قبل.
+
+### دامنه پیاده‌سازی
+
+- MapLibre GL JS به‌صورت lazy و client-only.
+- abstraction برای Map Provider.
+- پشتیبانی اولیه از `XYZ`/`TMS` داخلی با URL template تعریف‌شده توسط Admin.
+- Provider خارجی رایگان فقط به‌صورت optional و غیراجباری.
+- تست اتصال Provider، timeout، fallback و پیام خطای فارسی.
+- نمایش marker دفاتر و انبارها از پایگاه داده.
+- layer toggle، fit bounds، clustering پایه و popup لمسی.
+- کنترل امنیت URL با allowlist و جلوگیری از دسترسی به hostهای غیرمجاز.
+- assetهای MapLibre و iconها کاملاً local.
+
+### خروجی قابل مشاهده
+
+کاربر بیننده وضعیت، دفاتر و انبارهای ثبت‌شده را روی نقشه داخلی مشاهده می‌کند؛ قطع اینترنت عملکرد نقشه داخلی را مختل نمی‌کند.
+
+### سناریوی نمایش
+
+ثبت URL سرور نقشه داخلی، تست اتصال، ورود به `/map` و مشاهده چهار سطح سازمانی روی نقشه.
+
+### معیار پذیرش
+
+- با قطع اینترنت و دسترسی به LAN، نقشه داخلی کار کند.
+- Provider خراب باعث ازکارافتادن shell یا صفحات مدیریتی نشود.
+- popupها با Tap قابل استفاده باشند.
+
+---
+
+## Phase 5 — مدیریت مسیر، CSV و ترسیم روی نقشه
+
+### هدف
+
+تحویل مسیرهای reusable که در مأموریت‌های متعدد استفاده شوند.
+
+### دامنه پیاده‌سازی
+
+- مدل‌های `Route` و `RouteVersion` و `RoutePoint`.
+- import CSV با مراحل upload، preview، validation و confirm.
+- پشتیبانی از UTF-8 BOM و خطاهای سطری فارسی.
+- export CSV مطابق نمونه `docs/samples/route-template.csv`.
+- ترسیم مسیر با click/tap، undo، redo، حذف نقطه و finish.
+- محاسبه فاصله هر segment و فاصله تجمعی.
+- list/detail/duplicate/deactivate و versioning.
+- نمایش route روی نقشه و fit bounds.
+
+### خروجی قابل مشاهده
+
+کاربر می‌تواند یک CSV واقعی وارد کند یا مسیر را روی نقشه ترسیم کرده و خروجی CSV بگیرد.
+
+### سناریوی نمایش
+
+واردکردن فایل نمونه، اصلاح یک نقطه، ذخیره نسخه مسیر، export و ترسیم مسیر دوم با Tap روی تبلت.
+
+### معیار پذیرش
+
+مختصات خارج از محدوده، ترتیب تکراری، فایل بزرگ و ردیف ناقص با پیام دقیق رد شوند.
+
+---
+
+## Phase 6 — تعریف مرسوله و مقصد
+
+### هدف
+
+ایجاد موجودیت مرسوله مستقل از مأموریت.
+
+### دامنه پیاده‌سازی
+
+- مدل `Shipment` با کد رهگیری یکتا، نوع بار، توضیحات و وضعیت.
+- مبدأ از انبار تعریف‌شده.
+- مقصد به یکی از دو شکل:
+  - واحد سازمانی/انبار ثبت‌شده؛
+  - مختصات آزاد و عنوان مقصد.
+- انتخاب مقصد از فرم یا Tap روی نقشه.
+- list/filter/detail/history و soft delete.
+- نمایش مقصد و مبدأ مرسوله روی نقشه preview.
+
+### خروجی قابل مشاهده
+
+کاربر برنامه‌ریز می‌تواند مرسوله واقعی تعریف کند و مبدأ و مقصد آن را پیش از ساخت مأموریت ببیند.
+
+### سناریوی نمایش
+
+تعریف دو مرسوله، یکی با مقصد سازمانی و دیگری با مقصد انتخاب‌شده روی نقشه.
+
+### معیار پذیرش
+
+مرسوله فاقد مبدأ، مقصد یا نوع بار ذخیره نشود و کد رهگیری تکراری ایجاد نشود.
+
+---
+
+## Phase 7 — برنامه‌ریزی مأموریت از فرم
+
+### هدف
+
+ایجاد نخستین جریان کامل تخصیص مرسوله به خودرو.
+
+### دامنه پیاده‌سازی
+
+- مدل‌های `Mission` و `MissionShipment`.
+- فرم مرحله‌ای مستقل برای انتخاب:
+  - انبار مبدأ؛
+  - یک یا چند مرسوله سازگار؛
+  - مقصد؛
+  - خودرو؛
+  - زمان حرکت شمسی؛
+  - مسیر اختیاری؛
+  - توضیحات.
+- وضعیت‌های `DRAFT`, `PUBLISHED`, `CANCELLED`, `COMPLETED`.
+- snapshot سرعت، مبدأ، مقصد و نسخه مسیر هنگام انتشار.
+- کنترل آماده‌بودن خودرو و تداخل زمانی اولیه.
+- estimate فاصله، ETA و سوخت تقریبی.
+- انتشار و لغو تراکنشی همراه audit.
+
+### خروجی قابل مشاهده
+
+برنامه‌ریز یک مأموریت Draft می‌سازد، تخمین را می‌بیند و آن را منتشر می‌کند.
+
+### سناریوی نمایش
+
+انتخاب یک خودرو آماده، دو مرسوله هم‌مقصد، مسیر ذخیره‌شده و زمان حرکت؛ سپس انتشار و مشاهده جزئیات مأموریت.
+
+### معیار پذیرش
+
+خودروی خارج سرویس، مرسوله ناسازگار، زمان نامعتبر و تداخل قطعی رد شوند.
+
+---
+
+## Phase 8 — تعریف مأموریت از داخل نقشه
+
+### هدف
+
+تکمیل الزام تعریف مأموریت هم از فرم و هم مستقیماً از نمای نقشه.
+
+### دامنه پیاده‌سازی
+
+- حالت `Create Mission` در صفحه نقشه.
+- انتخاب انبار مبدأ از marker یا جست‌وجو.
+- انتخاب مقصد با Tap یا ورود مختصات.
+- انتخاب مسیر موجود، import سریع CSV یا ترسیم مسیر.
+- انتخاب خودرو و مرسوله در bottom sheet/drawer.
+- نمایش preview مبدأ، مقصد، مسیر، فاصله و ETA پیش از ذخیره.
+- reuse کامل serviceها و validationهای فاز 7؛ business logic تکراری ممنوع.
+
+### خروجی قابل مشاهده
+
+کاربر می‌تواند بدون ترک نقشه یک مأموریت کامل بسازد و منتشر کند.
+
+### سناریوی نمایش
+
+Tap روی انبار، Tap روی مقصد، انتخاب مسیر و خودرو، مشاهده preview و انتشار مأموریت.
+
+### معیار پذیرش
+
+مأموریت ساخته‌شده از نقشه و فرم باید خروجی و audit یکسان داشته باشد.
+
+---
+
+## Phase 9 — موتور موقعیت تقریبی و آزمایشگاه شبیه‌سازی
+
+### هدف
+
+پیاده‌سازی و قابل مشاهده‌کردن منطق اصلی حرکت پیش از ادغام آن با نقشه عملیاتی شلوغ.
+
+### دامنه پیاده‌سازی
+
+- تابع pure و deterministic برای محاسبه:
+  - وضعیت مأموریت در زمان انتخاب‌شده؛
+  - فاصله طی‌شده؛
+  - درصد پیشرفت؛
+  - مختصات تقریبی؛
+  - ETA و زمان باقی‌مانده؛
+  - bearing تقریبی.
+- interpolation روی RoutePointهای تجمعی.
+- fallback حرکت مستقیم بین مبدأ و مقصد برای مأموریت فاقد مسیر.
+- صفحه داخلی `/system/simulation-lab` فقط برای Admin/توسعه.
+- امکان انتخاب مأموریت و زمان و مشاهده نتیجه عددی و marker منفرد.
+- تست‌های مرزی گسترده و parity سمت server/client.
+
+### خروجی قابل مشاهده
+
+مالک محصول می‌تواند یک مأموریت را انتخاب و با تغییر زمان، حرکت تقریبی خودرو را در یک محیط ساده و قابل کنترل مشاهده کند.
+
+### سناریوی نمایش
+
+بررسی یک مأموریت قبل از شروع، در میانه مسیر، لحظه ETA و پس از رسیدن؛ سپس تکرار با مأموریت بدون مسیر.
+
+### معیار پذیرش
+
+نتایج برای ورودی یکسان همیشه یکسان باشند و موقعیت هر tick در DB ذخیره نشود.
+
+---
+
+## Phase 10 — نقشه عملیاتی پایه و حرکت خودروها
+
+### هدف
+
+نمایش مأموریت‌های واقعی و حرکت تقریبی خودروها روی نقشه اصلی.
+
+### دامنه پیاده‌سازی
+
+- endpoint سبک `/api/v1/map/scene`.
+- نمایش marker خودروهای مأموریت‌دار با جهت حرکت.
+- نمایش فقط خودروها در حالت عادی برای جلوگیری از شلوغی.
+- با انتخاب خودرو:
+  - نمایش مسیر یا خط مستقیم خط‌چین؛
+  - highlight مبدأ و مقصد؛
+  - popup/detail card شامل مبدأ، مقصد، پیشرفت، ETA، زمان حرکت و نوع خودرو.
+- label دائمی «موقعیت تقریبی / نمای محاسباتی».
+- refresh کنترل‌شده بدون ذخیره موقعیت در DB.
+
+### خروجی قابل مشاهده
+
+در نمای نقشه، خودروهای مأموریت‌های شروع‌شده در موقعیت تقریبی خود دیده می‌شوند و جزئیات هر مأموریت قابل مشاهده است.
+
+### سناریوی نمایش
+
+انتشار سه مأموریت با مسیر، بدون مسیر و پایان‌یافته؛ سپس مشاهده رفتار متفاوت آن‌ها روی نقشه.
+
+### معیار پذیرش
+
+مأموریت قبل از شروع در مبدأ، در حال حرکت روی مسیر و پس از ETA در مقصد نمایش داده شود.
+
+---
+
+## Phase 11 — جدول مأموریت، انتخاب متقابل و فیلترها
+
+### هدف
+
+تبدیل نقشه پایه به workspace عملیاتی قابل استفاده روزمره.
+
+### دامنه پیاده‌سازی
+
+- جدول خلاصه مأموریت‌های در حال اجرا کنار نقشه.
+- state واحد `selectedMissionId` برای همگام‌سازی نقشه و جدول.
+- scroll/virtualization برای تعداد زیاد.
+- فیلترها:
+  - مبدأ؛
+  - مقصد؛
+  - نوع خودرو؛
+  - وضعیت؛
+  - زمان شروع تا/از؛
+  - ETA تا/از؛
+  - جست‌وجوی شناسه خودرو یا مأموریت.
+- context action روی marker مبدأ و مقصد برای ایجاد فیلتر.
+- نمایش active filter chips و reset.
+- bottom sheet موبایل و drawer تبلت.
+
+### خروجی قابل مشاهده
+
+انتخاب خودرو در نقشه، ردیف جدول را انتخاب می‌کند و بالعکس؛ فیلترهای موردنیاز مالک محصول روی داده واقعی عمل می‌کنند.
+
+### سناریوی نمایش
+
+فیلتر همه خودروهای یک مقصد، انتخاب یک ردیف، مشاهده highlight روی نقشه و reset فیلترها.
+
+### معیار پذیرش
+
+state انتخاب در تغییر فیلتر، refresh و layout موبایل رفتار قابل پیش‌بینی داشته باشد.
+
+---
+
+## Phase 12 — سیکر زمان زنده و تاریخی
+
+### هدف
+
+بازسازی وضعیت ناوگان در هر زمان انتخاب‌شده.
+
+### دامنه پیاده‌سازی
+
+- state machine حالت `LIVE` و `HISTORICAL`.
+- سیکر زمان پایین نقشه با:
+  - انتخاب روز شمسی؛
+  - slider؛
+  - play/pause؛
+  - گام زمانی؛
+  - بازگشت به اکنون.
+- محاسبه تمام خودروهای scene با `evaluationTime` مشترک.
+- badge واضح حالت تاریخی و توقف refresh زنده در این حالت.
+- animation کنترل‌شده و پشتیبانی `prefers-reduced-motion`.
+- مدیریت timezone و مرز روز شمسی.
+
+### خروجی قابل مشاهده
+
+کاربر سیکر را عقب و جلو می‌برد و می‌بیند کدام خودرو هنوز حرکت نکرده، در مسیر است یا رسیده است.
+
+### سناریوی نمایش
+
+انتخاب یک بازه شامل سه مأموریت با زمان‌های مختلف و پخش timeline از قبل شروع تا پس از رسیدن.
+
+### معیار پذیرش
+
+خروج از حالت زنده کاملاً واضح باشد و بازگشت به Live زمان فعلی را بازیابی کند.
+
+---
+
+## Phase 13 — فرانمای وضعیت مدیریتی
+
+### هدف
+
+تحویل dashboard مدیریتی واقعی بر اساس همان قواعد دامنه نقشه.
+
+### دامنه پیاده‌سازی
+
+- query service واحد برای KPIها:
+  - تعداد کل خودروها؛
+  - خودروهای آماده؛
+  - کل مرسوله‌ها؛
+  - مرسوله‌های در انتظار؛
+  - کل مأموریت‌ها؛
+  - مأموریت‌های منتشرشده/در حال حرکت؛
+  - مأموریت‌های پایان‌یافته؛
+  - خودروهای خارج سرویس.
+- chartهای محدود و هدفمند برای وضعیت مأموریت و نوع خودرو.
+- بازه زمانی شمسی، آخرین زمان محاسبه و drill-down به لیست فیلترشده.
+- empty/loading/error states و عدم وابستگی به سرویس خارجی.
+
+### خروجی قابل مشاهده
+
+مدیر پس از ورود، نمای کلی واقعی سامانه را می‌بیند و از KPIها به لیست مرتبط می‌رود.
+
+### سناریوی نمایش
+
+ایجاد چند خودرو و مأموریت با وضعیت‌های مختلف و تطبیق دستی KPIها با داده لیست‌ها.
+
+### معیار پذیرش
+
+تعریف هر KPI در تست query و مستندات یکسان باشد و اعداد با فیلتر زمانی درست تغییر کنند.
+
+---
+
+## Phase 14 — مدیریت کاربران، آیکن‌ها و تنظیمات تکمیلی
+
+### هدف
+
+تکمیل قابلیت‌های Admin موردنیاز بهره‌برداری بدون مخلوط‌کردن آن‌ها با جریان‌های اصلی قبلی.
+
+### دامنه پیاده‌سازی
+
+- مدیریت کاربران، فعال/غیرفعال‌کردن و تخصیص نقش.
+- جلوگیری از حذف یا غیرفعال‌کردن آخرین Admin فعال.
+- کتابخانه `IconAsset` برای PNG و SVG sanitize‌شده.
+- انتساب آیکن به دفتر، انبار، نوع خودرو یا خودرو.
+- preview آیکن در theme روشن/تیره و نقشه.
+- تنظیمات timezone، Provider پیش‌فرض و refresh interval در محدوده‌های امن.
+- viewer ساده audit log با فیلتر actor/entity/action/date.
+
+### خروجی قابل مشاهده
+
+Admin کاربران و نقش‌ها را مدیریت می‌کند، آیکن‌های سفارشی می‌گذارد و تغییرات را در audit viewer می‌بیند.
+
+### سناریوی نمایش
+
+ایجاد کاربر بیننده، بارگذاری SVG امن، انتساب آن به یک نوع خودرو و مشاهده marker جدید روی نقشه.
+
+### معیار پذیرش
+
+SVG مخرب، فایل بزرگ، MIME جعلی و escalation نقش از API رد شوند.
+
+---
+
+## Phase 15 — ریسپانسیو، Touch و دسترس‌پذیری نهایی
+
+### هدف
+
+تبدیل قابلیت‌های کامل‌شده به تجربه پایدار در موبایل، تبلت، دسکتاپ و صفحات لمسی.
+
+### دامنه پیاده‌سازی
+
+- audit تمام صفحات در عرض‌های 360، 768، 1024 و 1440.
+- touch target حداقل مناسب، gesture conflict handling و عدم وابستگی به hover.
+- keyboard navigation، focus management، Escape و confirmation فرم‌های dirty.
+- اصلاح RTL، overflow، متن فارسی بلند و مقادیر LTR.
+- reduced motion و contrast در هر دو theme.
+- Playwright matrix برای desktop/tablet/mobile و سناریوهای Tap.
+- visual regression برای shell، فرم‌ها، dashboard و map workspace.
+
+### خروجی قابل مشاهده
+
+تمام جریان‌های اصلی از ورود تا تعریف مأموریت و مشاهده نقشه با تبلت و موبایل قابل انجام‌اند.
+
+### سناریوی نمایش
+
+اجرای کامل ساخت مأموریت روی viewport تبلت و مشاهده/فیلتر نقشه روی موبایل بدون mouse.
+
+### معیار پذیرش
+
+هیچ عملیات اصلی فقط با hover، right-click یا pointer دقیق قابل انجام نباشد.
+
+---
+
+## Phase 16 — اجرای بدون اینترنت، امنیت، عملیات و ظرفیت
+
+### هدف
+
+آماده‌سازی برای استقرار واقعی در شبکه داخلی.
+
+### دامنه پیاده‌سازی
+
+- اجرای acceptance test با اینترنت مسدود و فقط LAN فعال.
+- Docker/Compose یا راهنمای سرویس production متناسب با محیط هدف.
+- health/readiness، log rotation، backup و restore آزمایش‌شده.
+- CSP، CSRF، XSS، rate limiting، session hardening و upload hardening.
+- SSRF protection برای URL Provider نقشه.
+- indexهای DB و budget پاسخ `/map/scene`.
+- load test با dataset هدف شامل حداقل 2,000 مأموریت فعال شبیه‌سازی‌شده.
+- جلوگیری از ارسال geometry کامل همه مسیرها در payload اولیه.
+- runbook خرابی DB، Provider داخلی و بازیابی backup.
+
+### خروجی قابل مشاهده
+
+نسخه production در شبکه داخلی بدون اینترنت اجرا می‌شود و گزارش آزمون امنیت، ظرفیت، backup و restore موجود است.
+
+### سناریوی نمایش
+
+قطع اینترنت، restart سرویس‌ها، ورود، CRUD، نقشه داخلی، timeline، dashboard و restore یک backup آزمایشی.
+
+### معیار پذیرش
+
+عملکرد اصلی بدون اینترنت برقرار باشد و هیچ secret یا endpoint خارجی اجباری وجود نداشته باشد.
+
+---
+
+## Phase 17 — UAT و Release Candidate
+
+### هدف
+
+تثبیت نسخه قابل تحویل بدون افزودن feature جدید.
+
+### دامنه پیاده‌سازی
+
+- اجرای کامل `docs/TEST_ACCEPTANCE.md`.
+- اصلاح defectهای blocker و critical.
+- seed دمو مستقل از production seed.
+- راهنمای کوتاه نقش برنامه‌ریز، بیننده و Admin.
+- migration و rollback rehearsal.
+- release checklist، نسخه‌گذاری و sign-off مالک محصول.
+- ثبت محدودیت‌های پذیرفته‌شده و backlog نسخه بعد.
+
+### خروجی قابل مشاهده
+
+یک Release Candidate قابل نصب، دارای راهنما، داده دمو، گزارش UAT و روش rollback.
+
+### معیار پذیرش
+
+تمام سناریوهای بحرانی قبول شوند یا استثناها با تأیید مالک محصول ثبت شده باشند.
+
+---
+
+# وابستگی فازها
+
+```text
+0 → 1 → 2 → 3 → 4 → 5 → 6 → 7 → 8 → 9 → 10 → 11 → 12 → 13 → 14 → 15 → 16 → 17
+```
+
+ترتیب بالا مسیر پیش‌فرض و کم‌ریسک است. تغییر ترتیب تنها با ثبت ADR مجاز است. فازهای 2 و 3 پس از فاز 1 می‌توانند در branchهای مستقل توسعه یابند، اما merge فاز بعدی باید بر اساس ترتیب فوق و پس از حل تعارض و اجرای تست کامل انجام شود.
+
+---
+
+# فرمان‌های استاندارد مورد انتظار
 
 ```bash
 npm run lint
@@ -158,11 +679,43 @@ npm run db:migrate -- --name <name>
 npm run db:seed
 ```
 
-اگر script هنوز در فاز جاری ایجاد نشده، Claude باید آن را در همان فاز مرتبط اضافه کند و `package.json` را منظم نگه دارد.
+از Phase 0 تمام scriptهای موجود باید واقعاً کار کنند. اگر script جدید در فاز جاری لازم است، در همان فاز اضافه و در README ثبت شود.
 
-## بودجه‌های فنی اولیه
+---
 
-- initial JS صفحه login و dashboard تا حد ممکن کوچک؛ MapLibre فقط در صفحه map lazy-load شود.
-- `/map/scene` برای 2,000 مأموریت فعال، geometry کامل همه مسیرها را ارسال نکند.
-- p95 queryهای list/dashboard روی شبکه داخلی و dataset تست هدف زیر 500ms؛ map scene زیر 1s. اعداد در Phase 13 اندازه‌گیری و در صورت عدم تحقق مستند شوند.
-- interaction اصلی UI زیر 100ms و animation بدون jank روی تبلت میان‌رده.
+# قالب گزارش پایان هر فاز
+
+```text
+Phase:
+Status:
+Visible output URL:
+Demo account/data:
+Implemented scope:
+Files changed:
+Migration:
+Automated tests:
+Manual demo steps:
+Offline/network check:
+Known limitations:
+Deferred items:
+Decisions changed:
+Commit/PR:
+```
+
+---
+
+# بودجه‌های فنی اولیه
+
+- MapLibre فقط در routeهای نقشه lazy-load شود.
+- صفحه login و shell اصلی نباید asset یا script خارجی runtime داشته باشند.
+- `/map/scene` برای 2,000 مأموریت فعال geometry کامل همه مسیرها را در پاسخ اولیه نفرستد.
+- هدف اولیه p95 برای queryهای list/dashboard روی dataset آزمون کمتر از 500ms و map scene کمتر از 1s است؛ نتیجه واقعی در Phase 16 اندازه‌گیری و ثبت شود.
+- interactionهای معمول UI هدف زیر 100ms داشته باشند.
+- animation نقشه و timeline روی تبلت میان‌رده بدون jank محسوس باشد.
+- تعداد marker زیاد با clustering، viewport query یا rendering بهینه مدیریت شود.
+
+---
+
+# تعریف موفقیت این برنامه
+
+این فازبندی زمانی موفق است که مالک محصول پس از هر فاز بتواند یک تغییر ملموس را ببیند و Claude نیز بدون نگهداری هم‌زمان حجم بزرگی از context، یک قابلیت محدود، تست‌شده و قابل rollback را تحویل دهد.
