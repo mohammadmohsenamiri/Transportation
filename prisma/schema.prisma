@@ -33,6 +33,8 @@ model User {
   updatedRoutes            Route[]            @relation("RouteUpdatedBy")
   createdShipments         Shipment[]         @relation("ShipmentCreatedBy")
   updatedShipments         Shipment[]         @relation("ShipmentUpdatedBy")
+  createdMissions          Mission[]          @relation("MissionCreatedBy")
+  updatedMissions          Mission[]          @relation("MissionUpdatedBy")
 }
 
 model Role {
@@ -101,6 +103,8 @@ model OrganizationUnit {
 
   shipmentOrigins      Shipment[] @relation("ShipmentOrigin")
   shipmentDestinations Shipment[] @relation("ShipmentDestination")
+  missionOrigins       Mission[]  @relation("MissionOrigin")
+  missionDestinations  Mission[]  @relation("MissionDestination")
 
   @@index([parentId])
   @@index([level])
@@ -160,6 +164,7 @@ model Vehicle {
   deletedAt DateTime?
 
   vehicleType VehicleType @relation(fields: [vehicleTypeId], references: [id])
+  missions    Mission[]
 
   @@index([vehicleTypeId])
   @@index([readiness])
@@ -235,7 +240,8 @@ model Route {
   createdById String?
   updatedById String?
 
-  points RoutePoint[]
+  points   RoutePoint[]
+  missions Mission[]
 
   createdBy User? @relation("RouteCreatedBy", fields: [createdById], references: [id])
   updatedBy User? @relation("RouteUpdatedBy", fields: [updatedById], references: [id])
@@ -296,10 +302,82 @@ model Shipment {
   createdBy User? @relation("ShipmentCreatedBy", fields: [createdById], references: [id])
   updatedBy User? @relation("ShipmentUpdatedBy", fields: [updatedById], references: [id])
 
+  missionLinks MissionShipment[]
+
   @@index([status])
   @@index([originWarehouseId])
   @@index([cargoTypeId])
   @@index([isActive])
+}
+
+enum MissionPersistedStatus {
+  DRAFT
+  SCHEDULED
+  CANCELLED
+  ARCHIVED
+}
+
+model Mission {
+  id                            String                 @id @default(uuid())
+  code                          String                 @unique
+  vehicleId                     String
+  originWarehouseId             String
+  originTitle                   String
+  originLatitude                Decimal                @db.Decimal(9, 6)
+  originLongitude               Decimal                @db.Decimal(9, 6)
+  destinationOrganizationUnitId String?
+  destinationTitle              String
+  destinationLatitude           Decimal                @db.Decimal(9, 6)
+  destinationLongitude          Decimal                @db.Decimal(9, 6)
+  startAt                       DateTime
+  routeId                       String?
+  routeVersion                  Int?
+  speedSnapshotKmh              Decimal                @db.Decimal(10, 2)
+  distanceMeters                BigInt
+  estimatedDurationSeconds      Int
+  estimatedArrivalAt            DateTime
+  persistedStatus               MissionPersistedStatus @default(DRAFT)
+  notes                         String?
+  publishedAt                   DateTime?
+  cancelledAt                   DateTime?
+  cancellationReason            String?
+  duplicatedFromMissionId       String?
+
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  deletedAt   DateTime?
+  createdById String?
+  updatedById String?
+
+  vehicle                     Vehicle           @relation(fields: [vehicleId], references: [id])
+  originWarehouse             OrganizationUnit  @relation("MissionOrigin", fields: [originWarehouseId], references: [id])
+  destinationOrganizationUnit OrganizationUnit? @relation("MissionDestination", fields: [destinationOrganizationUnitId], references: [id])
+  route                       Route?            @relation(fields: [routeId], references: [id])
+
+  shipments MissionShipment[]
+
+  createdBy User? @relation("MissionCreatedBy", fields: [createdById], references: [id])
+  updatedBy User? @relation("MissionUpdatedBy", fields: [updatedById], references: [id])
+
+  @@index([vehicleId])
+  @@index([startAt])
+  @@index([estimatedArrivalAt])
+  @@index([persistedStatus])
+  @@index([originWarehouseId])
+}
+
+model MissionShipment {
+  id                 String   @id @default(uuid())
+  missionId          String
+  shipmentId         String
+  isActiveAssignment Boolean  @default(false)
+  createdAt          DateTime @default(now())
+
+  mission  Mission  @relation(fields: [missionId], references: [id], onDelete: Cascade)
+  shipment Shipment @relation(fields: [shipmentId], references: [id])
+
+  @@unique([missionId, shipmentId])
+  @@index([shipmentId])
 }
 
 model AuditLog {

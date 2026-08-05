@@ -142,11 +142,18 @@ export async function listShipments(filters: {
   status?: ShipmentStatus;
   cargoTypeId?: string;
   originWarehouseId?: string;
+  /** فقط مرسوله‌های بدون تخصیص فعال (قابل انتخاب برای مأموریت جدید) — Phase 7. */
+  availableForMission?: boolean;
 }): Promise<ShipmentDTO[]> {
   const where: Prisma.ShipmentWhereInput = { deletedAt: null };
   if (filters.status) where.status = filters.status;
   if (filters.cargoTypeId) where.cargoTypeId = filters.cargoTypeId;
   if (filters.originWarehouseId) where.originWarehouseId = filters.originWarehouseId;
+  if (filters.availableForMission) {
+    where.isActive = true;
+    where.status = { in: ["DRAFT", "WAITING_FOR_DISPATCH"] };
+    where.missionLinks = { none: { isActiveAssignment: true } };
+  }
   if (filters.q) {
     where.OR = [
       { trackingCode: { contains: filters.q, mode: "insensitive" } },

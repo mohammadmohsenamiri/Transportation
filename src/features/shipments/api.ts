@@ -33,13 +33,20 @@ export interface ShipmentUpdatePayload extends Partial<ShipmentPayload> {
 }
 
 export async function fetchShipments(
-  params: { q?: string; status?: string; cargoTypeId?: string; originWarehouseId?: string } = {},
+  params: {
+    q?: string;
+    status?: string;
+    cargoTypeId?: string;
+    originWarehouseId?: string;
+    availableForMission?: boolean;
+  } = {},
 ): Promise<Shipment[]> {
   const searchParams = new URLSearchParams();
   if (params.q) searchParams.set("q", params.q);
   if (params.status) searchParams.set("status", params.status);
   if (params.cargoTypeId) searchParams.set("cargoTypeId", params.cargoTypeId);
   if (params.originWarehouseId) searchParams.set("originWarehouseId", params.originWarehouseId);
+  if (params.availableForMission) searchParams.set("availableForMission", "true");
   const query = searchParams.toString();
   const response = await fetch(`/api/v1/shipments${query ? `?${query}` : ""}`);
   const data = await parseResponse<{ items: Shipment[] }>(response);

@@ -17,10 +17,23 @@ const shipmentDetailKey = (id: string) => ["shipments", "detail", id] as const;
 const shipmentHistoryKey = (id: string) => ["shipments", "history", id] as const;
 
 export function useShipments(
-  params: { q?: string; status?: string; cargoTypeId?: string; originWarehouseId?: string } = {},
+  params: {
+    q?: string;
+    status?: string;
+    cargoTypeId?: string;
+    originWarehouseId?: string;
+    availableForMission?: boolean;
+  } = {},
 ) {
   return useQuery({
-    queryKey: [...shipmentsKey, params.q ?? "", params.status ?? "", params.cargoTypeId ?? "", params.originWarehouseId ?? ""],
+    queryKey: [
+      ...shipmentsKey,
+      params.q ?? "",
+      params.status ?? "",
+      params.cargoTypeId ?? "",
+      params.originWarehouseId ?? "",
+      params.availableForMission ?? false,
+    ],
     queryFn: () => fetchShipments(params),
   });
 }

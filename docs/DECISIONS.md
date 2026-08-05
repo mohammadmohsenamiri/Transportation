@@ -149,3 +149,11 @@ WHERE "isActiveAssignment" = true;
 - فهرست مسیرها همیشه فقط آخرین نسخه هر `code` را نشان می‌دهد (انتخاب `MAX(version)` در حافظه پس از fetch، بدون pagination — مشابه محدودیت شناخته‌شده Phase 2/3 برای درخت سازمانی و ناوگان).
 
 برای `POST /routes/import-csv` (پیش‌نمایش، بدون ذخیره) طبق سند API، به‌جای ذخیره موقت preview در DB یا Redis (که طبق ADR-017 برای این نیاز اجباری نیست)، یک **توکن امضاشده stateless** استفاده شد: `HMAC-SHA256` روی `{actorUserId, checksum نقاط, exp}` با کلید `SESSION_SECRET`. در `POST /routes/confirm-import`، نقاط ارسالی کاربر دوباره کامل اعتبارسنجی و checksum آن با مقدار داخل توکن مقایسه می‌شود؛ عدم تطابق یا انقضا (۱۵ دقیقه) یا کاربر متفاوت رد می‌شود. این رویکرد الزام سند امنیتی («TTL و فقط سازنده confirm کند») را بدون زیرساخت اضافه برآورده می‌کند.
+
+## ADR-021 — نام‌گذاری وضعیت مأموریت و مقدار پیش‌فرض `isActiveAssignment`
+
+**Status:** Accepted
+
+`docs/IMPLEMENTATION_PLAN.md` فاز ۷ در متن توصیفی از وضعیت‌های «`DRAFT`, `PUBLISHED`, `CANCELLED`, `COMPLETED`» نام می‌برد، اما `ARCHITECTURE_AND_DATA_MODEL.md` بخش مدل داده (سند مرجع الزام‌آور) enum `MissionPersistedStatus` را صریحاً `DRAFT, SCHEDULED, CANCELLED, ARCHIVED` تعریف کرده است. همسو با رویه ADR-020 (اولویت سند معماری بر متن توصیفی implementation plan در تعارض نام‌گذاری)، enum پیاده‌سازی‌شده دقیقاً `DRAFT | SCHEDULED | CANCELLED | ARCHIVED` است؛ «انتشار» مأموریت آن را به `SCHEDULED` می‌برد (نه `PUBLISHED`) و بایگانی/پایان چرخه به `ARCHIVED` نگاشت می‌شود (نه `COMPLETED`، که در دامنه فعلی معادل مشخصی ندارد و به فازهای بعد موکول است).
+
+همچنین متن ADR-019 مقدار پیش‌فرض `MissionShipment.isActiveAssignment` را `@default(true)` نوشته بود؛ در پیاده‌سازی این مقدار به `@default(false)` اصلاح شد، چون رکورد `MissionShipment` هنگام ساخت/ویرایش مأموریت `DRAFT` (پیش از `publish`) باید غیرفعال باشد — در غیر این صورت انتخاب مرسوله در حالت پیش‌نویس، آن مرسوله را به‌اشتباه به‌عنوان «قبلاً به مأموریت فعال دیگری متصل» علامت می‌زد و از فهرست «مرسوله‌های در دسترس برای مأموریت» حذف می‌کرد. مقدار `true` فقط هنگام `commitMissionAssignment` (در زمان `publish` یا re-commit مأموریت `SCHEDULED`) صراحتاً تنظیم می‌شود؛ رفتار قید یکتایی (partial unique index) و نگاشت خطا به `SHIPMENT_ALREADY_ASSIGNED` طبق ADR-019 بدون تغییر باقی می‌ماند. این سند ADR-019 را نسخ نمی‌کند، فقط مقدار پیش‌فرض ستون را در همین‌جا تصحیح می‌کند.

@@ -1,6 +1,6 @@
 # وضعیت فازهای پیاده‌سازی
 
-آخرین به‌روزرسانی: 2026-08-05 (Phase 6)
+آخرین به‌روزرسانی: 2026-08-06 (Phase 7)
 
 ## خلاصه وضعیت
 
@@ -15,7 +15,7 @@
 | 4 | نقشه داخلی و نمایش دفاتر و انبارها | نقاط سازمانی روی Map Provider داخلی | DONE | L | Demo 1؛ بالاترین ریسک فنی (اتصال Provider داخلی) |
 | 5 | مدیریت مسیر، CSV و ترسیم روی نقشه | import/export CSV و ترسیم مسیر با Click/Tap | DONE | M | ADR-020 |
 | 6 | تعریف مرسوله و مقصد | ثبت مرسوله و preview مبدأ/مقصد روی نقشه | DONE | S | — |
-| 7 | برنامه‌ریزی مأموریت از فرم | ساخت Draft، تخمین و انتشار مأموریت | NOT_STARTED | M | شامل ADR-018/019 |
+| 7 | برنامه‌ریزی مأموریت از فرم | ساخت Draft، تخمین و انتشار مأموریت | DONE | M | ADR-018/019/021 |
 | 8 | تعریف مأموریت از داخل نقشه | ساخت و انتشار مأموریت بدون ترک نقشه | NOT_STARTED | M | Demo 2 |
 | 9 | موتور موقعیت تقریبی و آزمایشگاه شبیه‌سازی | حرکت یک مأموریت در زمان انتخابی | NOT_STARTED | M | — |
 | 10 | نقشه عملیاتی پایه و حرکت خودروها | خودروهای مأموریت‌دار در موقعیت تقریبی روی نقشه | NOT_STARTED | L | Demo 3 |
@@ -185,6 +185,23 @@ Offline/network verification: بدون سرویس خارجی؛ map preview از 
 Known limitations: فهرست مرسوله‌ها fetch کامل بدون pagination سمت سرور دارد (محدودیت مشابه فازهای قبل، Phase 16 بازبینی می‌شود). انتخاب مقصد از نوع «گره سازمانی» با یک `<select>` ساده پر از نتایج جست‌وجوی سرور است، نه combobox خودکاره؛ برای درخت سازمانی بزرگ در Phase 15 قابل بهبود است. عدم امکان drag برای اصلاح دقیق مقصد روی نقشه (فقط Tap و ورود مستقیم عدد) — تصمیم عمدی برای جلوگیری از drag تصادفی marker مبدأ (که موقعیتش از انبار می‌آید و نباید قابل جابه‌جایی باشد)، طبق محدودیت مستند در حافظه فنی پروژه. مرسوله هنوز به مأموریت متصل نیست (Phase 7).
 Deferred items: pagination سمت سرور، combobox جست‌وجوی پیشرفته مقصد (Phase 15)، اتصال مرسوله به مأموریت (Phase 7)، مشتق‌شدن وضعیت `IN_TRANSIT`/`DELIVERED` از مأموریت فعال (Phase 7+).
 Decisions added/changed: بدون ADR جدید — طراحی نسخه‌بندی/snapshot مقصد دقیقاً طبق `ARCHITECTURE_AND_DATA_MODEL.md` بخش Shipment اجرا شد. دسترسی خواندن `organization-units` و `cargo-types` برای MISSION_PLANNER که در Known limitations فازهای ۲/۳ به‌عنوان «فاز مصرف‌کننده» موکول شده بود، در همین فاز باز شد.
+
+### Phase 7 — برنامه‌ریزی مأموریت از فرم
+
+Status: DONE
+Started: 2026-08-05
+Completed: 2026-08-06
+Visible output URL: `/missions` (فهرست)، `/missions/new` (wizard ایجاد)، `/missions/[id]` (جزئیات/ویرایش/لغو/تکثیر/تاریخچه) — فقط Admin و MISSION_PLANNER؛ STATUS_VIEWER کاملاً مسدود است (طبق ماتریس مجوز PROJECT_SPEC، مشابه محدودیت Phase 6).
+Demo account/data: کاربران Admin/Planner از فازهای قبل؛ بدون مأموریت پیش‌فرض seed‌شده. برای ساخت مأموریت حداقل یک یا چند `Shipment` هم‌مبدأ/هم‌مقصد (Phase 6) و یک `Vehicle` با آمادگی `READY` (Phase 3) لازم است؛ `Route` اختیاری است (فاز fallback مسیر مستقیم طبق ADR-011).
+Branch/PR/Commit: مستقیم روی `main`
+Migrations: `prisma/migrations/20260805184713_add_missions` — مدل‌های `Mission` و `MissionShipment`، enum `MissionPersistedStatus`. `prisma/migrations/20260805184838_add_mission_shipment_active_unique_index` — ایندکس یکتای دستی partial (`MissionShipment_active_shipment_unique`) طبق ADR-019/021.
+Key files: `src/lib/dates/jalali.ts` (تبدیل شمسی/میلادی با افست ثابت Asia/Tehran)، `src/lib/domain/mission-rules.ts` (سازگاری مقصد مرسوله‌ها، هم‌پوشانی زمانی خودرو، وضعیت نمایشی مشتق‌شده)، `src/lib/domain/mission-estimate.ts` (تخمین pure مسافت/زمان/سوخت با استفاده مجدد از `geo/distance` فاز ۵)، `src/lib/validation/mission.ts`، `src/server/services/mission-service.ts` (create/publish/update/cancel/duplicate/estimate با `commitMissionAssignment` تراکنشی و row-lock روی مرسوله)، `src/app/api/v1/missions/**` (list/create/summary/estimate/[id]/[id]/publish/[id]/cancel/[id]/duplicate/[id]/history)، `src/components/ui/jalali-datetime-input.tsx`، `src/features/missions/*` (mission-wizard شش‌مرحله‌ای، missions-list-view، mission-detail-view، mission-history، mission-cancel-dialog، mission-duplicate-dialog، React Query hooks)، `src/app/(dashboard)/missions/**`. گسترش دسترسی خواندن `GET /api/v1/vehicles` به نقش MISSION_PLANNER (طبق یادداشت «فاز مصرف‌کننده» فاز ۳) و افزودن فیلتر `availableForMission` به `listShipments()` فاز ۶.
+Tests executed: `npm run typecheck`، `npm run lint`، `npm run test` (۱۱۰ تست Vitest شامل ۶ تست جدید تقویم جلالی، ۱۳ تست قواعد مأموریت، ۵ تست تخمین، ۹ تست اعتبارسنجی)، `npm run build`، `npx playwright test` (۱۵۶ تست در ۴ viewport شامل ۲۴ تست جدید Phase 7: سناریوی کامل wizard توسط Planner با دو مرسوله هم‌مقصد تا انتشار + تبدیل وضعیت مرسوله‌ها به «در انتظار ارسال»، رد مرسوله‌های ناسازگار/زمان گذشته/خودروی خارج از سرویس، رد انتشار به‌دلیل تداخل زمانی خودرو، لغو مأموریت با آزادسازی مرسوله‌ها + تکثیر به مأموریت پیش‌نویس جدید، حذف مأموریت پیش‌نویس، محرومیت کامل STATUS_VIEWER از صفحه و API).
+Manual demo steps: ورود Planner؛ `/missions/new` → انتخاب یک یا چند مرسوله هم‌مقصد → بررسی preview مبدأ/مقصد روی نقشه → انتخاب خودرو آماده → تعیین زمان شروع (ورودی تاریخ/ساعت شمسی) → انتخاب مسیر اختیاری (یا رد‌شدن با مسیر مستقیم) → بازبینی تخمین مسافت/مدت/سوخت → «ذخیره و انتشار»؛ مشاهده صفحه جزئیات با وضعیت «برنامه‌ریزی‌شده» و مرسوله‌های مرتبط؛ تست لغو با دلیل اجباری و مشاهده آزادشدن مرسوله؛ تست تکثیر مأموریت لغوشده به مأموریت جدید با زمان شروع دیگر.
+Offline/network verification: بدون سرویس خارجی؛ محاسبه تخمین کاملاً local (تابع pure، بدون فراخوانی سرویس آنلاین مسیریابی، طبق ممنوعیت صریح CLAUDE.md)؛ preview نقشه از همان MapProvider پیکربندی‌شده Phase 4 استفاده می‌کند.
+Known limitations: موتور موقعیت تقریبی لحظه‌ای (حرکت واقعی خودرو روی نقشه در طول مأموریت) هنوز پیاده نشده — Phase 7 فقط تخمین ایستا (مسافت/مدت/زمان تخمینی رسیدن) در زمان برنامه‌ریزی محاسبه می‌کند؛ وضعیت نمایشی `WAITING/IN_PROGRESS/ARRIVED` صرفاً مقایسه زمانی ساده است، نه شبیه‌سازی حرکت (Phase 9). ساخت مأموریت از داخل نقشه (بدون ترک صفحه نقشه) پیاده نشده (Phase 8). فهرست مأموریت‌ها fetch کامل بدون pagination سمت سرور دارد (محدودیت مشابه فازهای قبل). tolerance عدم تطابق مسیر با مبدأ/مقصد (متر) hardcode است، نه تنظیم قابل‌ویرایش Admin (Phase 14 تنظیمات). فیلد `MissionPersistedStatus.ARCHIVED` هنوز هیچ مسیر UI/سرویسی برای تنظیم آن ندارد (فقط در schema پیش‌بینی شده؛ مسیر واقعی بایگانی به فاز(های) بعد موکول است).
+Deferred items: موتور موقعیت تقریبی و شبیه‌سازی حرکت (Phase 9)، ساخت/انتشار مأموریت از داخل نقشه (Phase 8)، pagination سمت سرور فهرست مأموریت‌ها، تنظیم قابل‌ویرایش tolerance مسیر (Phase 14)، مسیر عملیاتی رسیدن به وضعیت `ARCHIVED`.
+Decisions added/changed: ADR-021 اضافه شد — نام‌گذاری enum `MissionPersistedStatus` طبق سند معماری (`DRAFT/SCHEDULED/CANCELLED/ARCHIVED`، نه عبارت توصیفی implementation plan) با همان رویه ADR-020، و تصحیح مقدار پیش‌فرض `MissionShipment.isActiveAssignment` از `true` (متن ADR-019) به `false` (پیاده‌سازی واقعی) چون رکورد پیش‌نویس باید غیرفعال آغاز شود.
 
 ## قاعده تغییر وضعیت به DONE
 

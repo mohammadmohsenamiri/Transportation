@@ -23,6 +23,7 @@ export async function GET(request: NextRequest) {
     status,
     cargoTypeId: searchParams.get("cargoTypeId") ?? undefined,
     originWarehouseId: searchParams.get("originWarehouseId") ?? undefined,
+    availableForMission: searchParams.get("availableForMission") === "true",
   });
   return NextResponse.json({ items });
 }

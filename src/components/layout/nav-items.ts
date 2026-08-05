@@ -31,7 +31,14 @@ export const prototypeMobileNavItems: NavItem[] = [
 export const authNavItems: NavItem[] = [
   { id: "dashboard", label: "داشبورد", icon: "dashboard", href: "/dashboard", enabled: true },
   { id: "map", label: "نقشه عملیات", icon: "map", href: "/map", enabled: true },
-  { id: "missions", label: "مأموریت‌ها", icon: "missions", href: "#", enabled: false },
+  {
+    id: "missions",
+    label: "مأموریت‌ها",
+    icon: "missions",
+    href: "/missions",
+    enabled: true,
+    requiredRoles: ["ADMIN", "MISSION_PLANNER"],
+  },
   {
     id: "shipments",
     label: "مرسوله‌ها",
@@ -63,6 +70,14 @@ export const authNavItems: NavItem[] = [
 export const authMobileNavItems: NavItem[] = [
   { id: "dashboard", label: "داشبورد", icon: "dashboard", href: "/dashboard", enabled: true },
   { id: "map", label: "نقشه", icon: "map", href: "/map", enabled: true },
+  {
+    id: "missions",
+    label: "مأموریت‌ها",
+    icon: "missions",
+    href: "/missions",
+    enabled: true,
+    requiredRoles: ["ADMIN", "MISSION_PLANNER"],
+  },
   {
     id: "shipments",
     label: "مرسوله‌ها",
