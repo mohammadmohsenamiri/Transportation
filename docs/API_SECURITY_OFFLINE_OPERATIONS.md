@@ -129,6 +129,18 @@ Actionهای audit اجباری:
 - نام فایل server-generated؛ path traversal ممنوع.
 - download با Content-Type و CSP مناسب.
 
+### Mapnik Style (XML) — پیشنهادی، طبق ADR-022؛ در فاز اجرایی آینده پیاده می‌شود
+
+این بخش صرفاً الزامات امنیتی الزام‌آور برای هر پیاده‌سازی آینده این قابلیت را ثبت می‌کند؛ هنوز کد/route/UI برایش وجود ندارد.
+
+- MIME و پسوند هر دو بررسی شوند (`.xml` + `text/xml`/`application/xml`)؛ به هیچ‌کدام به‌تنهایی اعتماد نشود.
+- parser باید DOCTYPE/DTD processing و resolve شدن external entity را کاملاً غیرفعال کند (جلوگیری از XXE و افشای فایل محلی سرور).
+- پارامترهای مسیر (`<Parameter name="file">`, `base` و مشابه) باید resolve و با بررسی `realpath` تضمین شوند که داخل sandbox اختصاصی همان آپلود باقی می‌مانند؛ `..`، مسیر مطلق خارج از sandbox و symlink فرارونده reject شوند.
+- در نسخه اول فقط `<Datasource>`های فایل‌محور/محلی (`shape`, `geojson`, `gdal`/راستر, `csv`) مجازند؛ اتصال شبکه‌ای `postgis`/`ogr`، پارامتر `table` (که در Mapnik می‌تواند subquery خام SQL باشد) و هر پارامتر `url`/`host`/`port` رد شوند — پذیرفتن آن‌ها معادل SQL injection/SSRF با اختیار آپلودکننده است.
+- سقف‌های سخت: حداکثر حجم فایل XML، حداکثر حجم بسته datasource، حداکثر تعداد `<Layer>`/`<Style>`، و timeout رندر (job بعد از عبور از سقف `FAILED` می‌شود).
+- فقط `ADMIN` مجاز به آپلود/تأیید render است؛ پیش از تأیید نهایی، فهرست datasourceهای resolve‌شده به Admin نمایش داده شود (الگوی preview/confirm دومرحله‌ای CSV، ADR-020) و عملیات کامل audit شود (ADR-015).
+- موتور رندر Mapnik یک وابستگی بومی/سیستمی **اختیاری** روی میزبان استقرار است، نه بخشی از runtime برنامه؛ نبود آن نباید هیچ قابلیت اصلی سامانه را مختل کند (مسیر جایگزین: پیش‌رندر کاملاً آفلاین توسط Admin/DevOps و ثبت فقط خروجی کاشی نهایی به‌عنوان یک `MapProvider` معمولی — بدون parse هیچ XML ناشناخته‌ای روی سرور).
+
 ## 7. امنیت Map Provider
 
 URL نمونه می‌تواند placeholderهای `{z}`, `{x}`, `{y}` و در TMS معکوس `{reverseY}` داشته باشد. Provider تنها توسط Admin ثبت می‌شود.

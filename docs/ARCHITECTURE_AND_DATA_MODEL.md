@@ -189,6 +189,22 @@ createdBy/audit
 
 Provider پیش‌فرض در production باید داخلی باشد.
 
+### MapStyleSource (پیشنهادی — طبق ADR-022، هنوز پیاده‌سازی/migration نشده)
+
+```text
+id, name
+originalFileName, storagePath (sandbox اختصاصی هر آپلود)
+sha256, sizeBytes
+datasourceManifestJson  -- خلاصه datasourceهای محلی resolve‌شده برای بازبینی Admin پیش از render
+renderStatus = PENDING | RENDERING | SUCCEEDED | FAILED
+renderError nullable
+renderedProviderId nullable -> MapProvider
+isActive (soft-delete)
+uploadedBy/audit
+```
+
+منشأ آپلود یک فایل Mapnik Style (XML) و وضعیت job رندر آن را نگه می‌دارد؛ عمداً از `MapProvider` جدا است تا «چگونگی تولید کاشی» از «چگونگی سرویس‌دهی کاشی» جدا بماند. خروجی موفق یک رکورد معمولی `MapProvider` (`kind = INTERNAL_XYZ`/`INTERNAL_TMS`) می‌سازد؛ کامپوننت نقشه سمت‌کلاینت هیچ آگاهی از این مدل ندارد. جزئیات کامل امنیت و pipeline در ADR-022 و بخش ۶ `API_SECURITY_OFFLINE_OPERATIONS.md`.
+
 ### IconAsset
 
 ```text
@@ -218,6 +234,7 @@ ShipmentStatus: DRAFT, WAITING_FOR_DISPATCH, IN_TRANSIT, DELIVERED, CANCELLED
 MissionPersistedStatus: DRAFT, SCHEDULED, CANCELLED, ARCHIVED
 RouteSource: CSV, MAP_DRAWING
 MapProviderKind: INTERNAL_TMS, INTERNAL_XYZ, INTERNAL_WMTS, EXTERNAL_XYZ
+MapStyleRenderStatus: PENDING, RENDERING, SUCCEEDED, FAILED  -- پیشنهادی، طبق ADR-022 (هنوز پیاده‌سازی نشده)
 ```
 
 وضعیت `WAITING/IN_PROGRESS/ARRIVED` برای مأموریت در view time مشتق می‌شود و enum persisted نیست.
