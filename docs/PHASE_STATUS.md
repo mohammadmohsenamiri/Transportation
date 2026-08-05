@@ -1,6 +1,6 @@
 # وضعیت فازهای پیاده‌سازی
 
-آخرین به‌روزرسانی: 2026-08-05
+آخرین به‌روزرسانی: 2026-08-05 (Phase 5)
 
 ## خلاصه وضعیت
 
@@ -13,7 +13,7 @@
 | 2 | ساختار سازمانی چهارسطحی | CRUD واقعی دفاتر و انبارها در نمای درختی | DONE | S | — |
 | 3 | انواع خودرو، نوع بار و ناوگان | صفحه واقعی مدیریت خودرو و آمار آمادگی | DONE | S | — |
 | 4 | نقشه داخلی و نمایش دفاتر و انبارها | نقاط سازمانی روی Map Provider داخلی | DONE | L | Demo 1؛ بالاترین ریسک فنی (اتصال Provider داخلی) |
-| 5 | مدیریت مسیر، CSV و ترسیم روی نقشه | import/export CSV و ترسیم مسیر با Click/Tap | NOT_STARTED | M | — |
+| 5 | مدیریت مسیر، CSV و ترسیم روی نقشه | import/export CSV و ترسیم مسیر با Click/Tap | DONE | M | ADR-020 |
 | 6 | تعریف مرسوله و مقصد | ثبت مرسوله و preview مبدأ/مقصد روی نقشه | NOT_STARTED | S | — |
 | 7 | برنامه‌ریزی مأموریت از فرم | ساخت Draft، تخمین و انتشار مأموریت | NOT_STARTED | M | شامل ADR-018/019 |
 | 8 | تعریف مأموریت از داخل نقشه | ساخت و انتشار مأموریت بدون ترک نقشه | NOT_STARTED | M | Demo 2 |
@@ -151,6 +151,23 @@ Offline/network verification: assetهای MapLibre (JS+CSS) کاملاً local b
 Known limitations: WMTS فقط در سطح CRUD/schema پشتیبانی می‌شود، منطق واقعی درخواست کاشی WMTS پیاده نشده (طبق عبارت «پشتیبانی اولیه XYZ/TMS» در دامنه فاز، عمدی است). تزریق واقعی API key برای Providerهای `requiresApiKey=true` در درخواست کاشی پیاده نشده — فقط به‌عنوان metadata ذخیره می‌شود. سخت‌گیری کامل SSRF (allowlist hostname/CIDR قابل‌تنظیم، محافظت DNS rebinding) عمداً به Phase 16 موکول شده (طبق IMPLEMENTATION_PLAN)؛ Phase 4 فقط baseline (scheme، placeholder، timeout، redirect:error، content-type/size در test-connection) را پیاده کرده است. تست واقعی «قطع اینترنت + سرور نقشه داخلی روی LAN» در این محیط توسعه ممکن نبود (بدون tile server داخلی واقعی)، در Phase 16 با محیط استقرار واقعی تکرار می‌شود. آیکن اختصاصی هر سطح سازمانی روی نقشه پیاده نشده؛ فعلاً رنگ دایره متمایز است (کتابخانه IconAsset در Phase 14 اضافه می‌شود).
 Deferred items: WMTS tile fetching، تزریق کلید API در درخواست کاشی، allowlist/SSRF کامل (Phase 16)، آیکن اختصاصی هر سطح (Phase 14)، آزمون قطع اینترنت با Provider داخلی واقعی (Phase 16).
 Decisions added/changed: بدون ADR جدید. یک یافته فنی مهم محیط توسعه مستند شد: نقشه‌ی MapLibre در پنل مرورگر داخلی ابزارهای Claude Code (نه در برنامه واقعی) هرگز style را بارگذاری نمی‌کند و هیچ کاشی درخواست نمی‌شود (احتمالاً throttle شدن requestAnimationFrame برای تب پس‌زمینه)؛ با یک تست تشخیصی Playwright (Chromium واقعی) تأیید شد که این محدودیت مخصوص آن پنل است و در مرورگر واقعی/Playwright ۴۲ کاشی واقعی با موفقیت بارگذاری شدند. یادداشت در حافظه پروژه ثبت شد تا در فازهای بعد (که نقشه بیشتر توسعه می‌یابد) verification همیشه از طریق Playwright انجام شود، نه پنل مرورگر داخلی.
+
+### Phase 5 — مدیریت مسیر، CSV و ترسیم روی نقشه
+
+Status: DONE
+Started: 2026-08-05
+Completed: 2026-08-05
+Visible output URL: `/routes` (همه نقش‌های احرازهویت‌شده — مشاهده)، `/routes/new` و مدیریت (ویرایش/تکثیر/غیرفعال‌سازی) در `/routes/[id]` (فقط Admin و MISSION_PLANNER).
+Demo account/data: کاربران Admin/Planner از فازهای قبل؛ بدون مسیر پیش‌فرض seed‌شده — طبق الگوی فازهای قبل همه از UI/CSV ساخته می‌شوند. برای ترسیم روی نقشه به یک `MapProvider` فعال (Phase 4) نیاز است.
+Branch/PR/Commit: مستقیم روی `main`
+Migrations: `prisma/migrations/20260805101856_add_routes` — مدل‌های `Route` (نسخه‌بندی با `code`+`version`) و `RoutePoint`، enum `RouteSource`.
+Key files: `src/lib/geo/distance.ts` (Haversine pure)، `src/lib/csv/csv.ts` (parser/stringifier RFC4180 سبک + مقابله با formula injection)، `src/lib/domain/route-csv.ts` (اعتبارسنجی سطری CSV طبق ADR-012)، `src/lib/validation/route.ts`، `src/lib/security/route-preview-token.ts` (توکن HMAC stateless برای import، ADR-020)، `src/server/services/route-service.ts` (create/newVersion/duplicate/patch/export/CSV preview)، `src/app/api/v1/routes/**` (list/create/summary/import-csv/confirm-import/[id]/[id]/new-version/[id]/duplicate/[id]/export.csv)، `src/features/routes/*` (route-draw-map-inner با Marker قابل‌درگ + خط GeoJSON، route-point-editor با undo/redo، route-csv-import-panel، routes-list-view، route-create-view، route-detail-view، duplicate-route-dialog)، `src/app/(dashboard)/routes/**`، افزودن آیکن‌های `copy`/`power`/`upload`/`download`.
+Tests executed: `npm run typecheck`، `npm run lint`، `npm run test` (۶۷ تست Vitest شامل ۷ تست Haversine، ۹ تست CSV parse/stringify/sanitize، ۱۰ تست اعتبارسنجی سطری CSV)، `npm run build`، `npx playwright test` (۱۱۲ تست در ۴ viewport شامل ۲۴ تست جدید Phase 5: import CSV نمونه + export دقیقاً همان داده، رد سرستون نامعتبر و مختصات خارج از محدوده، ترسیم مسیر با Tap توسط Planner، ویرایش نقطه → نسخه جدید + غیرفعال‌شدن نسخه قبلی + فهرست فقط آخرین نسخه را نشان می‌دهد، تکثیر + غیرفعال‌سازی، دسترسی خواندن Viewer ولی رد کامل نوشتن).
+Manual demo steps: ورود Admin؛ `/routes/new` → تب «وارد کردن CSV» → آپلود `docs/samples/route-template.csv` → مشاهده پیش‌نمایش موفق و ۳ نقطه → تکمیل شناسه/نام → ذخیره؛ در `/routes/[id]` روی «ویرایش نقاط (نسخه جدید)» کلیک و یک نقطه را در جدول اصلاح، «ذخیره نسخه جدید» (نسخه ۲ ساخته و نسخه ۱ غیرفعال می‌شود)؛ «خروجی CSV» را دانلود و مقایسه با ورودی؛ ورود Planner و تب «ترسیم روی نقشه» → چند Tap روی نقشه → «پایان مسیر» → ذخیره.
+Offline/network verification: بدون سرویس خارجی برای CRUD/CSV؛ ترسیم روی نقشه از همان MapProvider پیکربندی‌شده Phase 4 استفاده می‌کند (بدون CDN اضافه).
+Known limitations: فهرست مسیرها fetch کامل بدون pagination سمت سرور دارد (مشابه محدودیت مشابه Phase 2/3، در Phase 16 بازبینی می‌شود). محدودیت حداکثر تعداد نقطه (۱۰,۰۰۰) و حجم فایل (۵MB) درون کد hardcode است، نه یک تنظیم قابل ویرایش از UI (سیستم تنظیمات سراسری هنوز در فاز بعد اضافه نشده). parse فایل CSV بافر کامل را در حافظه می‌خواند (نه streaming واقعی)، اما پیش از parse با محدودیت اندازه فایل بررسی می‌شود. دسترسی خواندن `GET /routes` برای هر سه نقش باز است (طبق ماتریس مجوز PROJECT_SPEC که «مشاهده» را به Viewer می‌دهد). آیکن نقطه شروع/پایان/میانی روی نقشه فقط رنگی است (کتابخانه IconAsset در Phase 14).
+Deferred items: pagination سمت سرور فهرست مسیرها، تنظیم قابل‌ویرایش سقف نقطه/حجم فایل CSV (Phase 14 تنظیمات)، streaming واقعی parse فایل بزرگ (در صورت نیاز عملکردی در Phase 16 بازبینی می‌شود)، اتصال Route به Mission (Phase 7).
+Decisions added/changed: ADR-020 اضافه شد — نسخه‌بندی Route با رکورد جدید هم‌کد (نه مدل جدای `RouteVersion` که در متن IMPLEMENTATION_PLAN آمده ولی در ARCHITECTURE_AND_DATA_MODEL.md تعریف نشده بود) و توکن HMAC stateless برای پیش‌نمایش import CSV به‌جای ذخیره‌سازی سمت سرور. همچنین دو فایل ماک‌آپ اشتباه‌نام‌گذاری‌شده (`03-routes-management-desktop.png` و `04-settings-vehicles-desktop.png` که محتوایشان جابه‌جا بود) بدون تغییر محتوا مبادله شدند تا با `docs/mockups/README.md` مطابق باشند.
 
 ## قاعده تغییر وضعیت به DONE
 

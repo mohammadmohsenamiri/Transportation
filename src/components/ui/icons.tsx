@@ -23,6 +23,10 @@ export type IconName =
   | "plus"
   | "pencil"
   | "trash"
+  | "copy"
+  | "power"
+  | "upload"
+  | "download"
   | "logo";
 
 const paths: Record<IconName, React.ReactNode> = {
@@ -147,6 +151,30 @@ const paths: Record<IconName, React.ReactNode> = {
   trash: (
     <>
       <path d="M5 7h14M9.5 7V5.5a1.5 1.5 0 0 1 1.5-1.5h2a1.5 1.5 0 0 1 1.5 1.5V7M7 7l.8 12a1.5 1.5 0 0 0 1.5 1.4h5.4a1.5 1.5 0 0 0 1.5-1.4L17 7" strokeLinecap="round" strokeLinejoin="round" />
+    </>
+  ),
+  copy: (
+    <>
+      <rect x="8.5" y="8.5" width="11" height="11" rx="1.8" />
+      <path d="M15.5 8.5V6.3A1.8 1.8 0 0 0 13.7 4.5H6.3A1.8 1.8 0 0 0 4.5 6.3v7.4a1.8 1.8 0 0 0 1.8 1.8H8.5" />
+    </>
+  ),
+  power: (
+    <>
+      <path d="M12 4v7" strokeLinecap="round" />
+      <path d="M7 6.5a7 7 0 1 0 10 0" strokeLinecap="round" />
+    </>
+  ),
+  upload: (
+    <>
+      <path d="M12 15.5V4.5m0 0-4 4m4-4 4 4" strokeLinecap="round" strokeLinejoin="round" />
+      <path d="M4.5 15.5v3a2 2 0 0 0 2 2h11a2 2 0 0 0 2-2v-3" strokeLinecap="round" strokeLinejoin="round" />
+    </>
+  ),
+  download: (
+    <>
+      <path d="M12 4.5v11m0 0-4-4m4 4 4-4" strokeLinecap="round" strokeLinejoin="round" />
+      <path d="M4.5 15.5v3a2 2 0 0 0 2 2h11a2 2 0 0 0 2-2v-3" strokeLinecap="round" strokeLinejoin="round" />
     </>
   ),
   logo: (

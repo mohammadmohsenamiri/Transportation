@@ -29,6 +29,8 @@ model User {
   updatedOrganizationUnits OrganizationUnit[] @relation("OrganizationUnitUpdatedBy")
   createdMapProviders      MapProvider[]      @relation("MapProviderCreatedBy")
   updatedMapProviders      MapProvider[]      @relation("MapProviderUpdatedBy")
+  createdRoutes            Route[]            @relation("RouteCreatedBy")
+  updatedRoutes            Route[]            @relation("RouteUpdatedBy")
 }
 
 model Role {
@@ -197,6 +199,57 @@ model MapProvider {
 
   @@index([isEnabled])
   @@index([isDefault])
+}
+
+enum RouteSource {
+  CSV
+  MAP_DRAWING
+}
+
+model Route {
+  id                   String      @id @default(uuid())
+  code                 String
+  name                 String
+  description          String?
+  source               RouteSource
+  originLatitude       Decimal     @db.Decimal(9, 6)
+  originLongitude      Decimal     @db.Decimal(9, 6)
+  destinationLatitude  Decimal     @db.Decimal(9, 6)
+  destinationLongitude Decimal     @db.Decimal(9, 6)
+  totalDistanceMeters  BigInt
+  pointCount           Int
+  checksum             String
+  version              Int         @default(1)
+  isActive             Boolean     @default(true)
+
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  deletedAt   DateTime?
+  createdById String?
+  updatedById String?
+
+  points RoutePoint[]
+
+  createdBy User? @relation("RouteCreatedBy", fields: [createdById], references: [id])
+  updatedBy User? @relation("RouteUpdatedBy", fields: [updatedById], references: [id])
+
+  @@unique([code, version])
+  @@index([code])
+  @@index([isActive])
+}
+
+model RoutePoint {
+  id                       String  @id @default(uuid())
+  routeId                  String
+  sequence                 Int
+  latitude                 Decimal @db.Decimal(9, 6)
+  longitude                Decimal @db.Decimal(9, 6)
+  label                    String?
+  cumulativeDistanceMeters BigInt
+
+  route Route @relation(fields: [routeId], references: [id], onDelete: Cascade)
+
+  @@unique([routeId, sequence])
 }
 
 model AuditLog {

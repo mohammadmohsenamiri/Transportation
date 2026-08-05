@@ -136,3 +136,16 @@ WHERE "isActiveAssignment" = true;
 - هنگام publish، shipment با `SELECT ... FOR UPDATE` در transaction قفل و رکورد `MissionShipment` جدید با `isActiveAssignment = true` درج می‌شود؛ اگر رکورد فعال دیگری وجود داشته باشد، ایندکس خطای unique برمی‌گرداند و service آن را به خطای domain `SHIPMENT_ALREADY_ASSIGNED` نگاشت می‌کند.
 - هنگام `cancel`، `complete` یا `archive` مأموریت، `isActiveAssignment` مربوط به `false` تغییر می‌کند تا مرسوله آزاد شود.
 - این migration باید به‌صورت دستی (raw SQL در پوشه migration Prisma) نوشته و در Phase 7 مستند شود.
+
+## ADR-020 — پیاده‌سازی نسخه‌بندی Route و توکن پیش‌نمایش import CSV
+
+**Status:** Accepted
+
+`docs/IMPLEMENTATION_PLAN.md` فاز ۵ از عبارت «مدل‌های `Route` و `RouteVersion` و `RoutePoint`» استفاده می‌کند، اما `ARCHITECTURE_AND_DATA_MODEL.md` بخش ۳ (سند مرجع الزام‌آور مدل داده) صرفاً `Route` (با فیلد اسکالر `version Int`) و `RoutePoint` را تعریف می‌کند و مدل مستقل `RouteVersion` ندارد. طبق ADR-007 («ویرایش، نسخه جدید می‌سازد»)، نسخه‌بندی به این شکل پیاده‌سازی شد:
+
+- هر ویرایش ماهوی (تغییر نقاط) یک رکورد **جدید** `Route` می‌سازد با همان `code`، `version = نسخه قبلی + 1`، و `points` کاملاً جدید؛ رکورد نسخه قبلی بدون تغییر در DB باقی می‌ماند (`isActive=false` می‌شود) تا مأموریت‌های تاریخی (Phase 7+) که به `routeId` مشخص همان نسخه اشاره کرده‌اند دست‌نخورده بمانند.
+- ویرایش غیرماهوی (نام/توضیحات/`isActive`) به‌صورت in-place روی همان رکورد انجام می‌شود و نسخه جدید نمی‌سازد.
+- یکتایی `code` در سطح DB با `@@unique([code, version])` تضمین می‌شود؛ یکتایی «هر `code` فقط یک lineage» در service layer چک می‌شود.
+- فهرست مسیرها همیشه فقط آخرین نسخه هر `code` را نشان می‌دهد (انتخاب `MAX(version)` در حافظه پس از fetch، بدون pagination — مشابه محدودیت شناخته‌شده Phase 2/3 برای درخت سازمانی و ناوگان).
+
+برای `POST /routes/import-csv` (پیش‌نمایش، بدون ذخیره) طبق سند API، به‌جای ذخیره موقت preview در DB یا Redis (که طبق ADR-017 برای این نیاز اجباری نیست)، یک **توکن امضاشده stateless** استفاده شد: `HMAC-SHA256` روی `{actorUserId, checksum نقاط, exp}` با کلید `SESSION_SECRET`. در `POST /routes/confirm-import`، نقاط ارسالی کاربر دوباره کامل اعتبارسنجی و checksum آن با مقدار داخل توکن مقایسه می‌شود؛ عدم تطابق یا انقضا (۱۵ دقیقه) یا کاربر متفاوت رد می‌شود. این رویکرد الزام سند امنیتی («TTL و فقط سازنده confirm کند») را بدون زیرساخت اضافه برآورده می‌کند.

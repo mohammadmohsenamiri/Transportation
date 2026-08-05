@@ -49,6 +49,11 @@ async function main() {
     return;
   }
 
+  if (mode === "planner") {
+    await upsertUserWithRole("e2e_planner", "E2ePlanner123!", false, RoleCode.MISSION_PLANNER);
+    return;
+  }
+
   if (mode === "force-change") {
     const [username, password] = args;
     if (!username || !password) {
