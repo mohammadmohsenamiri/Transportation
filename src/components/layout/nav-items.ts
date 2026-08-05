@@ -32,7 +32,14 @@ export const authNavItems: NavItem[] = [
   { id: "dashboard", label: "داشبورد", icon: "dashboard", href: "/dashboard", enabled: true },
   { id: "map", label: "نقشه عملیات", icon: "map", href: "/map", enabled: true },
   { id: "missions", label: "مأموریت‌ها", icon: "missions", href: "#", enabled: false },
-  { id: "shipments", label: "مرسوله‌ها", icon: "shipments", href: "#", enabled: false },
+  {
+    id: "shipments",
+    label: "مرسوله‌ها",
+    icon: "shipments",
+    href: "/shipments",
+    enabled: true,
+    requiredRoles: ["ADMIN", "MISSION_PLANNER"],
+  },
   { id: "routes", label: "مسیرها", icon: "routes", href: "/routes", enabled: true },
   {
     id: "vehicles",
@@ -56,6 +63,14 @@ export const authNavItems: NavItem[] = [
 export const authMobileNavItems: NavItem[] = [
   { id: "dashboard", label: "داشبورد", icon: "dashboard", href: "/dashboard", enabled: true },
   { id: "map", label: "نقشه", icon: "map", href: "/map", enabled: true },
+  {
+    id: "shipments",
+    label: "مرسوله‌ها",
+    icon: "shipments",
+    href: "/shipments",
+    enabled: true,
+    requiredRoles: ["ADMIN", "MISSION_PLANNER"],
+  },
   { id: "routes", label: "مسیرها", icon: "routes", href: "/routes", enabled: true },
   {
     id: "vehicles",

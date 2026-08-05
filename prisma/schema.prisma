@@ -31,6 +31,8 @@ model User {
   updatedMapProviders      MapProvider[]      @relation("MapProviderUpdatedBy")
   createdRoutes            Route[]            @relation("RouteCreatedBy")
   updatedRoutes            Route[]            @relation("RouteUpdatedBy")
+  createdShipments         Shipment[]         @relation("ShipmentCreatedBy")
+  updatedShipments         Shipment[]         @relation("ShipmentUpdatedBy")
 }
 
 model Role {
@@ -97,6 +99,9 @@ model OrganizationUnit {
   createdBy User? @relation("OrganizationUnitCreatedBy", fields: [createdById], references: [id])
   updatedBy User? @relation("OrganizationUnitUpdatedBy", fields: [updatedById], references: [id])
 
+  shipmentOrigins      Shipment[] @relation("ShipmentOrigin")
+  shipmentDestinations Shipment[] @relation("ShipmentDestination")
+
   @@index([parentId])
   @@index([level])
 }
@@ -132,6 +137,8 @@ model CargoType {
   createdAt DateTime  @default(now())
   updatedAt DateTime  @updatedAt
   deletedAt DateTime?
+
+  shipments Shipment[]
 
   @@index([isActive])
 }
@@ -250,6 +257,49 @@ model RoutePoint {
   route Route @relation(fields: [routeId], references: [id], onDelete: Cascade)
 
   @@unique([routeId, sequence])
+}
+
+enum ShipmentStatus {
+  DRAFT
+  WAITING_FOR_DISPATCH
+  IN_TRANSIT
+  DELIVERED
+  CANCELLED
+}
+
+model Shipment {
+  id                            String         @id @default(uuid())
+  trackingCode                  String         @unique
+  title                         String
+  cargoTypeId                   String
+  originWarehouseId             String
+  destinationOrganizationUnitId String?
+  destinationTitle              String
+  destinationLatitude           Decimal        @db.Decimal(9, 6)
+  destinationLongitude          Decimal        @db.Decimal(9, 6)
+  weightKg                      Decimal?       @db.Decimal(10, 2)
+  volumeM3                      Decimal?       @db.Decimal(10, 3)
+  notes                         String?
+  status                        ShipmentStatus @default(DRAFT)
+  isActive                      Boolean        @default(true)
+
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  deletedAt   DateTime?
+  createdById String?
+  updatedById String?
+
+  cargoType                   CargoType         @relation(fields: [cargoTypeId], references: [id])
+  originWarehouse             OrganizationUnit  @relation("ShipmentOrigin", fields: [originWarehouseId], references: [id])
+  destinationOrganizationUnit OrganizationUnit? @relation("ShipmentDestination", fields: [destinationOrganizationUnitId], references: [id])
+
+  createdBy User? @relation("ShipmentCreatedBy", fields: [createdById], references: [id])
+  updatedBy User? @relation("ShipmentUpdatedBy", fields: [updatedById], references: [id])
+
+  @@index([status])
+  @@index([originWarehouseId])
+  @@index([cargoTypeId])
+  @@index([isActive])
 }
 
 model AuditLog {

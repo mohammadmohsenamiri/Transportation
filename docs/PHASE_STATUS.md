@@ -1,6 +1,6 @@
 # وضعیت فازهای پیاده‌سازی
 
-آخرین به‌روزرسانی: 2026-08-05 (Phase 5)
+آخرین به‌روزرسانی: 2026-08-05 (Phase 6)
 
 ## خلاصه وضعیت
 
@@ -14,7 +14,7 @@
 | 3 | انواع خودرو، نوع بار و ناوگان | صفحه واقعی مدیریت خودرو و آمار آمادگی | DONE | S | — |
 | 4 | نقشه داخلی و نمایش دفاتر و انبارها | نقاط سازمانی روی Map Provider داخلی | DONE | L | Demo 1؛ بالاترین ریسک فنی (اتصال Provider داخلی) |
 | 5 | مدیریت مسیر، CSV و ترسیم روی نقشه | import/export CSV و ترسیم مسیر با Click/Tap | DONE | M | ADR-020 |
-| 6 | تعریف مرسوله و مقصد | ثبت مرسوله و preview مبدأ/مقصد روی نقشه | NOT_STARTED | S | — |
+| 6 | تعریف مرسوله و مقصد | ثبت مرسوله و preview مبدأ/مقصد روی نقشه | DONE | S | — |
 | 7 | برنامه‌ریزی مأموریت از فرم | ساخت Draft، تخمین و انتشار مأموریت | NOT_STARTED | M | شامل ADR-018/019 |
 | 8 | تعریف مأموریت از داخل نقشه | ساخت و انتشار مأموریت بدون ترک نقشه | NOT_STARTED | M | Demo 2 |
 | 9 | موتور موقعیت تقریبی و آزمایشگاه شبیه‌سازی | حرکت یک مأموریت در زمان انتخابی | NOT_STARTED | M | — |
@@ -168,6 +168,23 @@ Offline/network verification: بدون سرویس خارجی برای CRUD/CSV؛
 Known limitations: فهرست مسیرها fetch کامل بدون pagination سمت سرور دارد (مشابه محدودیت مشابه Phase 2/3، در Phase 16 بازبینی می‌شود). محدودیت حداکثر تعداد نقطه (۱۰,۰۰۰) و حجم فایل (۵MB) درون کد hardcode است، نه یک تنظیم قابل ویرایش از UI (سیستم تنظیمات سراسری هنوز در فاز بعد اضافه نشده). parse فایل CSV بافر کامل را در حافظه می‌خواند (نه streaming واقعی)، اما پیش از parse با محدودیت اندازه فایل بررسی می‌شود. دسترسی خواندن `GET /routes` برای هر سه نقش باز است (طبق ماتریس مجوز PROJECT_SPEC که «مشاهده» را به Viewer می‌دهد). آیکن نقطه شروع/پایان/میانی روی نقشه فقط رنگی است (کتابخانه IconAsset در Phase 14).
 Deferred items: pagination سمت سرور فهرست مسیرها، تنظیم قابل‌ویرایش سقف نقطه/حجم فایل CSV (Phase 14 تنظیمات)، streaming واقعی parse فایل بزرگ (در صورت نیاز عملکردی در Phase 16 بازبینی می‌شود)، اتصال Route به Mission (Phase 7).
 Decisions added/changed: ADR-020 اضافه شد — نسخه‌بندی Route با رکورد جدید هم‌کد (نه مدل جدای `RouteVersion` که در متن IMPLEMENTATION_PLAN آمده ولی در ARCHITECTURE_AND_DATA_MODEL.md تعریف نشده بود) و توکن HMAC stateless برای پیش‌نمایش import CSV به‌جای ذخیره‌سازی سمت سرور. همچنین دو فایل ماک‌آپ اشتباه‌نام‌گذاری‌شده (`03-routes-management-desktop.png` و `04-settings-vehicles-desktop.png` که محتوایشان جابه‌جا بود) بدون تغییر محتوا مبادله شدند تا با `docs/mockups/README.md` مطابق باشند.
+
+### Phase 6 — تعریف مرسوله و مقصد
+
+Status: DONE
+Started: 2026-08-05
+Completed: 2026-08-05
+Visible output URL: `/shipments` (فهرست)، `/shipments/new` (ایجاد)، `/shipments/[id]` (جزئیات/ویرایش/تاریخچه) — فقط Admin و MISSION_PLANNER؛ STATUS_VIEWER کاملاً مسدود است (طبق ماتریس مجوز PROJECT_SPEC که برای مرسوله فقط Planner/Admin را تیک زده و برخلاف Phase 5 مقدار «مشاهده» برای Viewer ندارد).
+Demo account/data: کاربران Admin/Planner از فازهای قبل؛ بدون مرسوله یا نوع بار پیش‌فرض seed‌شده. برای ایجاد مرسوله حداقل یک `CargoType` و یک `OrganizationUnit` سطح `WAREHOUSE` لازم است.
+Branch/PR/Commit: مستقیم روی `main`
+Migrations: `prisma/migrations/20260805121327_add_shipments` — مدل `Shipment` و enum `ShipmentStatus`.
+Key files: `src/lib/validation/shipment.ts` (`superRefine` برای دو حالت مقصد)، `src/server/services/shipment-service.ts` (تولید خودکار `trackingCode` با retry روی برخورد یکتایی، snapshot مختصات مقصد، اعتبارسنجی مبدأ=WAREHOUSE)، `src/app/api/v1/shipments/**`، `src/features/shipments/*` (shipment-form با map preview قابل Tap برای مقصد آزاد — با استفاده مجدد از `RouteDrawMapInner` فاز ۵ در حالت `editable=false`، shipments-list-view، shipment-create-view، shipment-detail-view، shipment-history)، `src/app/(dashboard)/shipments/**`. گسترش دسترسی خواندن `GET /api/v1/organization-units` و `GET /api/v1/cargo-types` به نقش MISSION_PLANNER (طبق یادداشت «فاز مصرف‌کننده» ثبت‌شده در Known limitations فازهای ۲ و ۳)، و افزودن `fetchOrganizationUnitsFlat`/`useOrganizationUnitsFlat` به feature سازمانی موجود برای انتخاب مقصد.
+Tests executed: `npm run typecheck`، `npm run lint`، `npm run test` (۷۷ تست Vitest شامل ۱۰ تست جدید اعتبارسنجی مرسوله: دو حالت مقصد معتبر، مقصد ناقص در هر دو حالت، فیلدهای الزامی، مختصات خارج از محدوده، وزن/حجم منفی، بروزرسانی جزئی)، `npm run build`، `npx playwright test` (۱۳۲ تست در ۴ viewport شامل ۲۰ تست جدید Phase 6: ایجاد مرسوله با مقصد گره سازمانی توسط Admin، ایجاد مرسوله با مقصد مختصات آزاد توسط Planner، رد مبدأ غیرانبار/مقصد ناقص/کد رهگیری تکراری، ویرایش وضعیت با ثبت در تاریخچه + حذف نرم از فهرست، محرومیت کامل STATUS_VIEWER).
+Manual demo steps: ورود Admin؛ ساخت یک نوع بار در `/system/cargo-types` در صورت نبود؛ `/shipments/new` → تعریف مرسوله اول با مقصد «گره سازمانی» (جست‌وجو و انتخاب یک دفتر/انبار دارای مختصات)؛ مشاهده preview نقشه با مبدأ/مقصد؛ ذخیره و مشاهده صفحه جزئیات با کد رهگیری تولیدشده خودکار؛ ساخت مرسوله دوم با مقصد «مختصات آزاد» و تعیین مقصد با Tap روی نقشه یا وارد کردن مستقیم عرض/طول جغرافیایی؛ در جزئیات یکی از مرسوله‌ها روی «ویرایش» کلیک، تغییر وضعیت به «در انتظار ارسال» و مشاهده رویداد در تاریخچه.
+Offline/network verification: بدون سرویس خارجی؛ map preview از همان MapProvider پیکربندی‌شده Phase 4 استفاده می‌کند.
+Known limitations: فهرست مرسوله‌ها fetch کامل بدون pagination سمت سرور دارد (محدودیت مشابه فازهای قبل، Phase 16 بازبینی می‌شود). انتخاب مقصد از نوع «گره سازمانی» با یک `<select>` ساده پر از نتایج جست‌وجوی سرور است، نه combobox خودکاره؛ برای درخت سازمانی بزرگ در Phase 15 قابل بهبود است. عدم امکان drag برای اصلاح دقیق مقصد روی نقشه (فقط Tap و ورود مستقیم عدد) — تصمیم عمدی برای جلوگیری از drag تصادفی marker مبدأ (که موقعیتش از انبار می‌آید و نباید قابل جابه‌جایی باشد)، طبق محدودیت مستند در حافظه فنی پروژه. مرسوله هنوز به مأموریت متصل نیست (Phase 7).
+Deferred items: pagination سمت سرور، combobox جست‌وجوی پیشرفته مقصد (Phase 15)، اتصال مرسوله به مأموریت (Phase 7)، مشتق‌شدن وضعیت `IN_TRANSIT`/`DELIVERED` از مأموریت فعال (Phase 7+).
+Decisions added/changed: بدون ADR جدید — طراحی نسخه‌بندی/snapshot مقصد دقیقاً طبق `ARCHITECTURE_AND_DATA_MODEL.md` بخش Shipment اجرا شد. دسترسی خواندن `organization-units` و `cargo-types` برای MISSION_PLANNER که در Known limitations فازهای ۲/۳ به‌عنوان «فاز مصرف‌کننده» موکول شده بود، در همین فاز باز شد.
 
 ## قاعده تغییر وضعیت به DONE
 

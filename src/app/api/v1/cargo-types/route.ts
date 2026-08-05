@@ -7,7 +7,7 @@ import { flattenIssues } from "@/lib/validation/utils";
 import { DomainError } from "@/lib/errors/domain-error";
 
 export async function GET(request: NextRequest) {
-  const result = await requireActor([RoleCode.ADMIN]);
+  const result = await requireActor([RoleCode.ADMIN, RoleCode.MISSION_PLANNER]);
   if ("response" in result) return result.response;
 
   const q = request.nextUrl.searchParams.get("q") ?? undefined;

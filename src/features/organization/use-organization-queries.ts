@@ -5,6 +5,7 @@ import {
   fetchOrganizationTree,
   fetchOrganizationUnitHistory,
   fetchOrganizationUnitsByLevel,
+  fetchOrganizationUnitsFlat,
   updateOrganizationUnitRequest,
   type OrganizationUnitCreatePayload,
   type OrganizationUnitUpdatePayload,
@@ -22,6 +23,13 @@ export function useOrganizationUnitsByLevel(level: OrganizationLevelValue | null
     queryKey: ["organization", "by-level", level],
     queryFn: () => fetchOrganizationUnitsByLevel(level as OrganizationLevelValue),
     enabled: level !== null,
+  });
+}
+
+export function useOrganizationUnitsFlat(q?: string) {
+  return useQuery({
+    queryKey: ["organization", "flat", q ?? ""],
+    queryFn: () => fetchOrganizationUnitsFlat(q),
   });
 }
 

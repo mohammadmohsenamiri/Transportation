@@ -24,6 +24,13 @@ export async function fetchOrganizationUnitsByLevel(level: OrganizationLevelValu
   return data.items;
 }
 
+export async function fetchOrganizationUnitsFlat(q?: string): Promise<OrganizationUnit[]> {
+  const query = q ? `?q=${encodeURIComponent(q)}` : "";
+  const response = await fetch(`/api/v1/organization-units${query}`);
+  const data = await parseResponse<{ items: OrganizationUnit[] }>(response);
+  return data.items;
+}
+
 export interface OrganizationUnitCreatePayload {
   code: string;
   name: string;
