@@ -34,17 +34,5 @@ export interface OrganizationHistoryEntry {
   occurredAt: string;
 }
 
-export interface ApiFieldError {
-  code: string;
-  message: string;
-  fieldErrors: Record<string, string>;
-}
-
-export class ApiError extends Error {
-  readonly fieldErrors: Record<string, string>;
-
-  constructor(payload: ApiFieldError) {
-    super(payload.message);
-    this.fieldErrors = payload.fieldErrors;
-  }
-}
+export type { ApiFieldError } from "@/lib/http/api-client-error";
+export { ApiError } from "@/lib/http/api-client-error";

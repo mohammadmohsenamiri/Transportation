@@ -1,6 +1,6 @@
 # وضعیت فازهای پیاده‌سازی
 
-آخرین به‌روزرسانی: 2026-08-04
+آخرین به‌روزرسانی: 2026-08-05
 
 ## خلاصه وضعیت
 
@@ -11,7 +11,7 @@
 | 0 | پیش‌نمایش قابل کلیک و هویت بصری | فرانمای وضعیت و نقشه prototype در موبایل/تبلت/دسکتاپ | DONE | M | اولین فاز اجرایی؛ بدون DB |
 | 1 | اجرای واقعی برنامه، ورود و پوسته محافظت‌شده | ورود واقعی، تغییر رمز و navigation نقش‌محور | DONE | M | — |
 | 2 | ساختار سازمانی چهارسطحی | CRUD واقعی دفاتر و انبارها در نمای درختی | DONE | S | — |
-| 3 | انواع خودرو، نوع بار و ناوگان | صفحه واقعی مدیریت خودرو و آمار آمادگی | NOT_STARTED | S | — |
+| 3 | انواع خودرو، نوع بار و ناوگان | صفحه واقعی مدیریت خودرو و آمار آمادگی | DONE | S | — |
 | 4 | نقشه داخلی و نمایش دفاتر و انبارها | نقاط سازمانی روی Map Provider داخلی | NOT_STARTED | L | Demo 1؛ بالاترین ریسک فنی (اتصال Provider داخلی) |
 | 5 | مدیریت مسیر، CSV و ترسیم روی نقشه | import/export CSV و ترسیم مسیر با Click/Tap | NOT_STARTED | M | — |
 | 6 | تعریف مرسوله و مقصد | ثبت مرسوله و preview مبدأ/مقصد روی نقشه | NOT_STARTED | S | — |
@@ -106,7 +106,7 @@ Decisions added/changed: ندارد (Prisma 7.9.1 با معماری adapter-base
 Status: DONE
 Started: 2026-08-04
 Completed: 2026-08-05
-Visible output URL: `/organization` (فقط نقش Admin؛ پس از `npm run dev`، `http://localhost:3000`)
+Visible output URL: `/organization` در زمان تکمیل این فاز؛ در Phase 3 به `/system/organization` منتقل شد تا با مسیرهای مستند‌شده در `docs/PROJECT_SPEC.md` بخش ۱۲ هم‌راستا باشد (فقط نقش Admin؛ پس از `npm run dev`، `http://localhost:3000`)
 Demo account/data: کاربر Admin از Phase 1 (`SEED_ADMIN_USERNAME`)؛ بدون داده تجاری پیش‌فرض — گره‌ها از UI ساخته می‌شوند.
 Branch/PR/Commit: مستقیم روی `main`
 Migrations: `prisma/migrations/20260804192641_add_organization_unit` — مدل `OrganizationUnit` (enum `OrganizationLevel`، self-relation برای parent/children، createdBy/updatedBy → User)
@@ -117,6 +117,23 @@ Offline/network verification: بدون سرویس خارجی؛ تمام عملی
 Known limitations: کتابخانه آیکن (`iconAssetId`) در schema پیش‌بینی شده اما UI انتخاب آیکن ندارد (Phase 14)؛ نمایش مختصات فقط عددی است، بدون نقشه واقعی (Phase 4)؛ درخت سازمانی fetch کامل (بدون pagination/lazy loading سمت سرور) — برای مقیاس چندصد گره کافی است، در صورت رشد باید در Phase 16 بازبینی شود؛ دسترسی خواندن (GET) نیز مثل نوشتن فقط Admin است — گسترش به نقش‌های دیگر (مثل Planner برای انتخاب انبار مبدأ) در فاز مربوطه (Phase 7+) اضافه می‌شود.
 Deferred items: انتخاب آیکن گره (Phase 14)، نمایش روی نقشه واقعی (Phase 4)، دسترسی خواندن reference-data برای Planner/Viewer (فاز مصرف‌کننده).
 Decisions added/changed: ندارد؛ اما دو یافته فنی مهم حین این فاز کشف و مستند شد: (۱) `Secure` cookie روی HTTP ساده (127.0.0.1:3100) توسط `page.request` پلی‌رایت—برخلاف مرورگر واقعی—نادیده گرفته می‌شود؛ راه‌حل: env اختیاری `COOKIE_INSECURE` فقط برای اجرای تست/محلی HTTP، پیش‌فرض امن حفظ شد. (۲) فیلتر جست‌وجوی خالی نباید Set خالی برگرداند وگرنه کل درخت پنهان می‌شود — در `organization-tree-view.tsx` اصلاح شد.
+
+### Phase 3 — انواع خودرو، نوع بار و ناوگان
+
+Status: DONE
+Started: 2026-08-05
+Completed: 2026-08-05
+Visible output URL: `/system/vehicles`، `/system/vehicle-types`، `/system/cargo-types` (فقط نقش Admin؛ پس از `npm run dev`، `http://localhost:3000`). به همین مناسبت `/organization` (Phase 2) نیز به `/system/organization` منتقل و یک shell مشترک تب‌دار (`(dashboard)/system/layout.tsx`) برای کل بخش تنظیمات سامانه اضافه شد.
+Demo account/data: کاربر Admin از Phase 1؛ بدون نوع خودرو/بار پیش‌فرض یا hardcoded — طبق ممنوعیت صریح CLAUDE.md همه از UI ساخته می‌شوند.
+Branch/PR/Commit: مستقیم روی `main`
+Migrations: `prisma/migrations/20260804232317_add_fleet_catalogs` — مدل‌های `VehicleType`، `CargoType`، `Vehicle` و enum `VehicleReadiness`.
+Key files: `prisma/schema.prisma`، `src/lib/validation/vehicle.ts`، `src/server/services/{vehicle-type,cargo-type,vehicle}-service.ts`، `src/app/api/v1/{vehicle-types,cargo-types,vehicles}/**`، `src/app/(dashboard)/system/**` (layout تب‌دار + صفحات organization/vehicles/vehicle-types/cargo-types)، `src/features/fleet/*` (لیست‌های catalog، فرم خودرو، React Query hooks)، `src/components/ui/stat-card.tsx`، `src/lib/http/api-client-error.ts` (استخراج `ApiError` مشترک از Phase 2)
+Tests executed: `npm run typecheck`، `npm run lint`، `npm run test` (۲۹ تست Vitest شامل رد مقادیر منفی/صفر و کد نامعتبر)، `npm run build`، `npx playwright test` (۶۸ تست در ۴ viewport: تعریف دو نوع خودرو و سه خودرو، خارج‌کردن یکی از سرویس و بررسی تغییر آمار نسبت به baseline؛ رد مقدار منفی، نام/شناسه تکراری، حذف نوع استفاده‌شده و موفقیت حذف پس از آزادشدن؛ رد کامل نقش STATUS_VIEWER از صفحه و API)
+Manual demo steps: ورود Admin؛ `/system/vehicle-types` → افزودن «کامیونت» و «وانت»؛ `/system/vehicles` → افزودن سه خودرو (کارت‌های خلاصه بالای صفحه به‌روز می‌شوند)؛ ویرایش یکی و تغییر وضعیت به «خارج از سرویس» → مشاهده تغییر فوری کارت‌های «آماده» و «خارج از سرویس».
+Offline/network verification: بدون سرویس خارجی؛ همه عملیات از طریق API داخلی `/api/v1/{vehicle-types,cargo-types,vehicles}*`.
+Known limitations: کتابخانه آیکن (`iconAssetId`) هنوز اضافه نشده (طبق تصمیم Phase 2 برای OrganizationUnit، اینجا هم به Phase 14 موکول شد)؛ دسترسی خواندن (GET) نیز مثل نوشتن فقط Admin است، هم‌راستا با محدودیت مشابه Phase 2 — گسترش به Planner برای انتخاب خودرو/نوع بار هنگام برنامه‌ریزی مأموریت در Phase 7+ انجام می‌شود؛ فیلتر/جست‌وجو fetch کامل بدون pagination سمت سرور دارد (مقیاس بزرگ در Phase 16 بازبینی می‌شود)؛ `GET /vehicles/availability` مستند در API_SECURITY (برای بررسی هم‌پوشانی زمانی) پیاده نشد چون به مأموریت (Phase 7) وابسته است.
+Deferred items: انتخاب آیکن (Phase 14)، `GET /vehicles/availability` (Phase 7)، دسترسی خواندن reference-data برای Planner/Viewer (فاز مصرف‌کننده).
+Decisions added/changed: بدون ADR جدید. دو اصلاح غیر-Phase-3 به‌عنوان جزئی از این فاز انجام شد چون زیرساخت لازم (`system` shell) اینجا ساخته شد: (۱) مسیر Phase 2 از `/organization` به `/system/organization` منتقل شد تا با `docs/PROJECT_SPEC.md` بخش ۱۲ مطابق باشد. (۲) نوع/کلاس `ApiError` مشترک بین features که در Phase 2 داخل `features/organization/types.ts` تعریف شده بود، به `src/lib/http/api-client-error.ts` منتقل شد (با re-export برای سازگاری) تا `features/fleet` بدون وابستگی نادرست به `features/organization` از آن استفاده کند.
 
 ## قاعده تغییر وضعیت به DONE
 

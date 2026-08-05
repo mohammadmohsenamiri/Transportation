@@ -97,6 +97,63 @@ model OrganizationUnit {
   @@index([level])
 }
 
+enum VehicleReadiness {
+  READY
+  OUT_OF_SERVICE
+}
+
+model VehicleType {
+  id          String  @id @default(uuid())
+  code        String? @unique
+  name        String  @unique
+  description String?
+  isActive    Boolean @default(true)
+
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+
+  vehicles Vehicle[]
+
+  @@index([isActive])
+}
+
+model CargoType {
+  id          String  @id @default(uuid())
+  code        String? @unique
+  name        String  @unique
+  description String?
+  isActive    Boolean @default(true)
+
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+
+  @@index([isActive])
+}
+
+model Vehicle {
+  id                     String           @id @default(uuid())
+  identifier             String           @unique
+  plateNumber            String?
+  vehicleTypeId          String
+  fuelTankLiters         Decimal          @db.Decimal(10, 2)
+  avgConsumptionPer100Km Decimal          @db.Decimal(10, 3)
+  avgSpeedKmh            Decimal          @db.Decimal(10, 2)
+  readiness              VehicleReadiness @default(READY)
+  notes                  String?
+  isActive               Boolean          @default(true)
+
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+
+  vehicleType VehicleType @relation(fields: [vehicleTypeId], references: [id])
+
+  @@index([vehicleTypeId])
+  @@index([readiness])
+}
+
 model AuditLog {
   id           String   @id @default(uuid())
   actorUserId  String?

@@ -23,7 +23,7 @@ test.describe("ساختار سازمانی — Phase 2", () => {
     const warehouseName = `انبار ${prefix}`;
 
     await loginAs(page, E2E_ADMIN_USERNAME, E2E_ADMIN_PASSWORD);
-    await page.goto("/organization");
+    await page.goto("/system/organization");
 
     await page.getByRole("button", { name: "افزودن دفتر کشوری" }).click();
     await page.locator('input[name="code"]').fill(`${prefix}-IR`);
@@ -144,7 +144,7 @@ test.describe("ساختار سازمانی — Phase 2", () => {
   test("نقش غیر Admin (STATUS_VIEWER) از صفحه و API مدیریت سازمانی رد می‌شود", async ({ page }) => {
     await loginAs(page, E2E_VIEWER_USERNAME, E2E_VIEWER_PASSWORD);
 
-    await page.goto("/organization");
+    await page.goto("/system/organization");
     await expect(page.getByText("دسترسی مجاز نیست")).toBeVisible();
     await expect(page.getByRole("button", { name: "افزودن دفتر کشوری" })).toHaveCount(0);
 
