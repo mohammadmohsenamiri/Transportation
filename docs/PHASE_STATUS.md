@@ -12,7 +12,7 @@
 | 1 | اجرای واقعی برنامه، ورود و پوسته محافظت‌شده | ورود واقعی، تغییر رمز و navigation نقش‌محور | DONE | M | — |
 | 2 | ساختار سازمانی چهارسطحی | CRUD واقعی دفاتر و انبارها در نمای درختی | DONE | S | — |
 | 3 | انواع خودرو، نوع بار و ناوگان | صفحه واقعی مدیریت خودرو و آمار آمادگی | DONE | S | — |
-| 4 | نقشه داخلی و نمایش دفاتر و انبارها | نقاط سازمانی روی Map Provider داخلی | NOT_STARTED | L | Demo 1؛ بالاترین ریسک فنی (اتصال Provider داخلی) |
+| 4 | نقشه داخلی و نمایش دفاتر و انبارها | نقاط سازمانی روی Map Provider داخلی | DONE | L | Demo 1؛ بالاترین ریسک فنی (اتصال Provider داخلی) |
 | 5 | مدیریت مسیر، CSV و ترسیم روی نقشه | import/export CSV و ترسیم مسیر با Click/Tap | NOT_STARTED | M | — |
 | 6 | تعریف مرسوله و مقصد | ثبت مرسوله و preview مبدأ/مقصد روی نقشه | NOT_STARTED | S | — |
 | 7 | برنامه‌ریزی مأموریت از فرم | ساخت Draft، تخمین و انتشار مأموریت | NOT_STARTED | M | شامل ADR-018/019 |
@@ -134,6 +134,23 @@ Offline/network verification: بدون سرویس خارجی؛ همه عملیا
 Known limitations: کتابخانه آیکن (`iconAssetId`) هنوز اضافه نشده (طبق تصمیم Phase 2 برای OrganizationUnit، اینجا هم به Phase 14 موکول شد)؛ دسترسی خواندن (GET) نیز مثل نوشتن فقط Admin است، هم‌راستا با محدودیت مشابه Phase 2 — گسترش به Planner برای انتخاب خودرو/نوع بار هنگام برنامه‌ریزی مأموریت در Phase 7+ انجام می‌شود؛ فیلتر/جست‌وجو fetch کامل بدون pagination سمت سرور دارد (مقیاس بزرگ در Phase 16 بازبینی می‌شود)؛ `GET /vehicles/availability` مستند در API_SECURITY (برای بررسی هم‌پوشانی زمانی) پیاده نشد چون به مأموریت (Phase 7) وابسته است.
 Deferred items: انتخاب آیکن (Phase 14)، `GET /vehicles/availability` (Phase 7)، دسترسی خواندن reference-data برای Planner/Viewer (فاز مصرف‌کننده).
 Decisions added/changed: بدون ADR جدید. دو اصلاح غیر-Phase-3 به‌عنوان جزئی از این فاز انجام شد چون زیرساخت لازم (`system` shell) اینجا ساخته شد: (۱) مسیر Phase 2 از `/organization` به `/system/organization` منتقل شد تا با `docs/PROJECT_SPEC.md` بخش ۱۲ مطابق باشد. (۲) نوع/کلاس `ApiError` مشترک بین features که در Phase 2 داخل `features/organization/types.ts` تعریف شده بود، به `src/lib/http/api-client-error.ts` منتقل شد (با re-export برای سازگاری) تا `features/fleet` بدون وابستگی نادرست به `features/organization` از آن استفاده کند.
+
+### Phase 4 — نقشه داخلی و نمایش دفاتر و انبارها
+
+Status: DONE
+Started: 2026-08-05
+Completed: 2026-08-05
+Visible output URL: `/map` (همه نقش‌های احرازهویت‌شده: Admin، STATUS_VIEWER، MISSION_PLANNER)؛ مدیریت Provider در `/system/map-providers` (فقط Admin).
+Demo account/data: کاربر Admin از Phase 1؛ گره‌های سازمانی دارای مختصات از Phase 2. بدون Provider پیش‌فرض seed‌شده — طبق ADR-016 انتخاب Provider تصمیم استقرار است و Admin باید حداقل یک Provider (ترجیحاً داخلی) ثبت کند.
+Branch/PR/Commit: مستقیم روی `main`
+Migrations: `prisma/migrations/20260805042443_add_map_provider` — مدل `MapProvider` و enumهای `MapProviderKind`، `MapProviderHealthStatus`.
+Key files: `src/lib/domain/map-provider-rules.ts` (اعتبارسنجی baseline آدرس/scheme + نگاشت scheme به MapLibre)، `src/lib/validation/map-provider.ts`، `src/server/services/map-provider-service.ts` (شامل test-connection سمت سرور با timeout/redirect:error/content-type/size)، `src/app/api/v1/map-providers/**`، `src/app/api/v1/map/organization-units/route.ts` (endpoint سبک همه‌نقش)، `src/features/map-providers/*`، `src/features/map/*` (map-view، maplibre-map-inner با dynamic import و ssr:false، level-styles)، `src/app/(dashboard)/map/page.tsx`، افزودن `maplibre-gl` به dependencies.
+Tests executed: `npm run typecheck`، `npm run lint`، `npm run test` (۴۱ تست Vitest شامل ۱۲ تست قواعد URL/scheme)، `npm run build`، `npx playwright test` (۸۸ تست در ۴ viewport: بارگذاری کاشی واقعی از یک XYZ خارجی نمونه و تأیید موفقیت `test-connection`، حالت تخمین «Provider تنظیم نشده» بدون کرش shell، toggle سطوح سازمانی، رد آدرس بدون placeholder/بزرگ‌نمایی نامعتبر/نام تکراری، دسترسی STATUS_VIEWER به `/map` ولی نه به مدیریت Provider).
+Manual demo steps: ورود Admin؛ `/system/map-providers` → افزودن Provider (نوع XYZ، آدرس `{z}/{x}/{y}`)؛ «تست اتصال» → نمایش وضعیت سالم/خراب فارسی؛ تنظیم Provider پیش‌فرض؛ ورود به `/map` → مشاهده marker چهار سطح سازمانی (دفتر کشوری/گروه/توزیع‌کننده/انبار) با رنگ متمایز، کلاستر در تراکم بالا، popup با tap/click، toggle نمایش هر سطح.
+Offline/network verification: assetهای MapLibre (JS+CSS) کاملاً local bundle شده‌اند (بدون کاشی/فونت/آیکن از CDN)؛ NavigationControl از SVG inline (data URI) استفاده می‌کند نه sprite خارجی؛ کاشی‌ها فقط از URL پیکربندی‌شده توسط Admin درخواست می‌شوند. چون این محیط فقط دسترسی اینترنت دارد نه یک tile server داخلی واقعی، اتصال به یک Provider خارجی نمونه (OSM-compatible XYZ، طبق پیشنهاد صریح ADR-016/سند عملیات) تأیید شد؛ آزمون واقعی «قطع اینترنت + Provider داخلی روی LAN» به‌عنوان محدودیت شناخته‌شده ثبت می‌شود (Phase 16 دوباره پوشش می‌دهد).
+Known limitations: WMTS فقط در سطح CRUD/schema پشتیبانی می‌شود، منطق واقعی درخواست کاشی WMTS پیاده نشده (طبق عبارت «پشتیبانی اولیه XYZ/TMS» در دامنه فاز، عمدی است). تزریق واقعی API key برای Providerهای `requiresApiKey=true` در درخواست کاشی پیاده نشده — فقط به‌عنوان metadata ذخیره می‌شود. سخت‌گیری کامل SSRF (allowlist hostname/CIDR قابل‌تنظیم، محافظت DNS rebinding) عمداً به Phase 16 موکول شده (طبق IMPLEMENTATION_PLAN)؛ Phase 4 فقط baseline (scheme، placeholder، timeout، redirect:error، content-type/size در test-connection) را پیاده کرده است. تست واقعی «قطع اینترنت + سرور نقشه داخلی روی LAN» در این محیط توسعه ممکن نبود (بدون tile server داخلی واقعی)، در Phase 16 با محیط استقرار واقعی تکرار می‌شود. آیکن اختصاصی هر سطح سازمانی روی نقشه پیاده نشده؛ فعلاً رنگ دایره متمایز است (کتابخانه IconAsset در Phase 14 اضافه می‌شود).
+Deferred items: WMTS tile fetching، تزریق کلید API در درخواست کاشی، allowlist/SSRF کامل (Phase 16)، آیکن اختصاصی هر سطح (Phase 14)، آزمون قطع اینترنت با Provider داخلی واقعی (Phase 16).
+Decisions added/changed: بدون ADR جدید. یک یافته فنی مهم محیط توسعه مستند شد: نقشه‌ی MapLibre در پنل مرورگر داخلی ابزارهای Claude Code (نه در برنامه واقعی) هرگز style را بارگذاری نمی‌کند و هیچ کاشی درخواست نمی‌شود (احتمالاً throttle شدن requestAnimationFrame برای تب پس‌زمینه)؛ با یک تست تشخیصی Playwright (Chromium واقعی) تأیید شد که این محدودیت مخصوص آن پنل است و در مرورگر واقعی/Playwright ۴۲ کاشی واقعی با موفقیت بارگذاری شدند. یادداشت در حافظه پروژه ثبت شد تا در فازهای بعد (که نقشه بیشتر توسعه می‌یابد) verification همیشه از طریق Playwright انجام شود، نه پنل مرورگر داخلی.
 
 ## قاعده تغییر وضعیت به DONE
 

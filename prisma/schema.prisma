@@ -27,6 +27,8 @@ model User {
 
   createdOrganizationUnits OrganizationUnit[] @relation("OrganizationUnitCreatedBy")
   updatedOrganizationUnits OrganizationUnit[] @relation("OrganizationUnitUpdatedBy")
+  createdMapProviders      MapProvider[]      @relation("MapProviderCreatedBy")
+  updatedMapProviders      MapProvider[]      @relation("MapProviderUpdatedBy")
 }
 
 model Role {
@@ -152,6 +154,49 @@ model Vehicle {
 
   @@index([vehicleTypeId])
   @@index([readiness])
+}
+
+enum MapProviderKind {
+  INTERNAL_TMS
+  INTERNAL_XYZ
+  INTERNAL_WMTS
+  EXTERNAL_XYZ
+}
+
+enum MapProviderHealthStatus {
+  UNKNOWN
+  HEALTHY
+  UNHEALTHY
+}
+
+model MapProvider {
+  id              String                  @id @default(uuid())
+  name            String                  @unique
+  kind            MapProviderKind
+  urlTemplate     String
+  attribution     String?
+  minZoom         Int                     @default(0)
+  maxZoom         Int                     @default(19)
+  tileSize        Int                     @default(256)
+  subdomains      Json?
+  requiresApiKey  Boolean                 @default(false)
+  secretReference String?
+  isDefault       Boolean                 @default(false)
+  isEnabled       Boolean                 @default(true)
+  healthStatus    MapProviderHealthStatus @default(UNKNOWN)
+  lastCheckedAt   DateTime?
+
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  deletedAt   DateTime?
+  createdById String?
+  updatedById String?
+
+  createdBy User? @relation("MapProviderCreatedBy", fields: [createdById], references: [id])
+  updatedBy User? @relation("MapProviderUpdatedBy", fields: [updatedById], references: [id])
+
+  @@index([isEnabled])
+  @@index([isDefault])
 }
 
 model AuditLog {

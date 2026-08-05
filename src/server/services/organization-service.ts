@@ -77,6 +77,37 @@ export async function getOrganizationTree(): Promise<OrganizationUnitDTO[]> {
   return listOrganizationUnits({});
 }
 
+export interface OrganizationMapMarkerDTO {
+  id: string;
+  code: string;
+  name: string;
+  level: OrganizationLevel;
+  latitude: number;
+  longitude: number;
+}
+
+/**
+ * فقط گره‌های فعال و دارای مختصات کامل — برای مصرف در نقشه (Phase 4)، در دسترس هر
+ * سه نقش (نه فقط Admin مثل بقیه endpointهای این سرویس) چون Viewer/Planner هم باید
+ * نقشه را ببینند.
+ */
+export async function listOrganizationUnitsForMap(): Promise<OrganizationMapMarkerDTO[]> {
+  const units = await prisma.organizationUnit.findMany({
+    where: { deletedAt: null, isActive: true, latitude: { not: null }, longitude: { not: null } },
+    select: { id: true, code: true, name: true, level: true, latitude: true, longitude: true },
+    orderBy: { level: "asc" },
+  });
+
+  return units.map((unit) => ({
+    id: unit.id,
+    code: unit.code,
+    name: unit.name,
+    level: unit.level,
+    latitude: Number(unit.latitude),
+    longitude: Number(unit.longitude),
+  }));
+}
+
 export async function getOrganizationUnitById(id: string): Promise<OrganizationUnitDTO | null> {
   const unit = await prisma.organizationUnit.findFirst({
     where: { id, deletedAt: null },
