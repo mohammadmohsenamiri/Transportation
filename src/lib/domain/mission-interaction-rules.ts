@@ -1,4 +1,4 @@
-import { jalaliToUtcIso, utcIsoToJalali } from "@/lib/dates/jalali";
+import { tehranCalendarDayRange } from "@/lib/dates/jalali";
 import type { MapSceneMission } from "@/features/map/types";
 import type { MissionDisplayStatusValue } from "@/features/missions/types";
 
@@ -49,21 +49,13 @@ export function isMissionFilterActive(filter: MissionFilterState): boolean {
   );
 }
 
-/** روز تقویمی تهران که `date` در آن قرار دارد را به‌صورت بازه [شروع, پایان) UTC برمی‌گرداند. */
-function tehranDayRange(date: Date): { from: Date; to: Date } {
-  const j = utcIsoToJalali(date);
-  const from = new Date(jalaliToUtcIso({ year: j.year, month: j.month, day: j.day, hour: 0, minute: 0 }));
-  const to = new Date(from.getTime() + 24 * 60 * 60 * 1000);
-  return { from, to };
-}
-
 /** بازه [from, to) معادل هر preset را نسبت به لحظه `now` محاسبه می‌کند؛ ALL یعنی بدون محدودیت (null). */
 export function resolveTimePresetRange(preset: TimeFilterPreset, now: Date): { from: Date | null; to: Date | null } {
   switch (preset) {
     case "ALL":
       return { from: null, to: null };
     case "TODAY":
-      return tehranDayRange(now);
+      return tehranCalendarDayRange(now);
     case "NEXT_24H":
       return { from: now, to: new Date(now.getTime() + 24 * 60 * 60 * 1000) };
     case "NEXT_7_DAYS":

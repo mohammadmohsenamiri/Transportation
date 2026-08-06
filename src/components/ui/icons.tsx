@@ -23,6 +23,10 @@ export type IconName =
   | "filter"
   | "sort"
   | "more-vertical"
+  | "play"
+  | "pause"
+  | "skip-back"
+  | "skip-forward"
   | "plus"
   | "pencil"
   | "trash"
@@ -159,6 +163,15 @@ const paths: Record<IconName, React.ReactNode> = {
       <circle cx="12" cy="18.5" r="1.4" fill="currentColor" stroke="none" />
     </>
   ),
+  play: <path d="M7 5.5v13l11-6.5-11-6.5Z" strokeLinejoin="round" />,
+  pause: (
+    <>
+      <rect x="6" y="5" width="4" height="14" rx="1" />
+      <rect x="14" y="5" width="4" height="14" rx="1" />
+    </>
+  ),
+  "skip-back": <path d="M13 6 7 12l6 6M18 6l-6 6 6 6" strokeLinecap="round" strokeLinejoin="round" />,
+  "skip-forward": <path d="M11 6l6 6-6 6M6 6l6 6-6 6" strokeLinecap="round" strokeLinejoin="round" />,
   plus: <path d="M12 5v14M5 12h14" strokeLinecap="round" />,
   pencil: (
     <path

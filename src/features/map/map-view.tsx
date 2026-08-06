@@ -17,6 +17,8 @@ import { MissionDetailPanel } from "@/features/map/mission-detail-panel";
 import { useMissionInteraction } from "@/features/map/use-mission-interaction";
 import { OperationalMissionTable } from "@/features/map/operational-mission-table";
 import { ActiveFilterChips, MissionFilterForm, isFilterPanelActive } from "@/features/map/mission-filter-panel";
+import { useTimelineEngine } from "@/features/map/use-timeline-engine";
+import { TimelineSeeker } from "@/features/map/timeline-seeker";
 
 const MapLibreMapInner = dynamic(
   () => import("@/features/map/maplibre-map-inner").then((mod) => mod.MapLibreMapInner),
@@ -51,7 +53,11 @@ export function MapView({ canCreateMission = false }: MapViewProps) {
   const router = useRouter();
   const providerQuery = useActiveMapProvider();
   const markersQuery = useOrgUnitsForMap();
-  const sceneQuery = useMapScene();
+  // موتور زمان‌بندی فاز ۱۲ باید پیش از useMapScene فراخوانی شود چون viewTimeParam آن ورودی همان
+  // query است — طبق docs/phase-12-timeline-engine/00-README.md §9.1، این hook یک سطح بالاتر از
+  // useMissionInteraction فاز ۱۱ در جریان داده این صفحه قرار می‌گیرد.
+  const timeline = useTimelineEngine();
+  const sceneQuery = useMapScene(timeline.viewTimeParam);
   const [visibleLevels, setVisibleLevels] = useState<Set<OrganizationLevelValue>>(
     () => new Set(levelOrder),
   );
@@ -134,6 +140,9 @@ export function MapView({ canCreateMission = false }: MapViewProps) {
     setManualLat("");
     setManualLng("");
     interaction.select(null);
+    // طبق تصمیم ثبت‌شده در ADR-028: ورود به حالت ساخت مأموریت همیشه به نمای زنده بازمی‌گردد — انتخاب
+    // مبدأ/مقصد باید روی داده «الان» انجام شود، نه یک لحظه تاریخی/پخش‌شده دلخواه.
+    timeline.returnToLive();
   }
 
   function exitMissionMode() {
@@ -371,7 +380,7 @@ export function MapView({ canCreateMission = false }: MapViewProps) {
               {!missionMode && vehicles.length > 0 && (
                 <div className="pointer-events-none absolute inset-x-3 bottom-3 flex justify-center">
                   <span className="rounded-full bg-[var(--color-bg-elevated)]/90 px-3 py-1 text-[11px] font-medium text-[var(--color-text-muted)] shadow">
-                    نمای زنده محاسباتی — موقعیت‌ها تقریبی هستند
+                    {timeline.mode === "LIVE" ? "نمای زنده محاسباتی" : "بازسازی زمانی"} — موقعیت‌ها تقریبی هستند
                   </span>
                 </div>
               )}
@@ -400,6 +409,8 @@ export function MapView({ canCreateMission = false }: MapViewProps) {
           </Panel>
         )}
       </div>
+
+      {!missionMode && <TimelineSeeker timeline={timeline} />}
 
       {!missionMode && allMissions.length > 0 && (
         <button

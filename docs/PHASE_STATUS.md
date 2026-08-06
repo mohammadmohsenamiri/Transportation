@@ -1,6 +1,6 @@
 # وضعیت فازهای پیاده‌سازی
 
-آخرین به‌روزرسانی: 2026-08-06 (Phase 11)
+آخرین به‌روزرسانی: 2026-08-06 (Phase 12)
 
 ## خلاصه وضعیت
 
@@ -20,7 +20,7 @@
 | 9 | موتور موقعیت تقریبی | لایه محاسباتی pure (بدون UI) — Development Pack کامل در `docs/phase-09-simulation-engine/` | DONE | M | بدون UI، طبق ADR-024 |
 | 10 | نقشه عملیاتی پایه و حرکت خودروها | خودروهای مأموریت‌دار در موقعیت تقریبی روی نقشه | DONE | L | Demo 3؛ ADR-025 |
 | 11 | جدول مأموریت، انتخاب متقابل و فیلترها | همگام‌سازی نقشه/جدول و فیلترهای عملیاتی | DONE | M | ADR-027 |
-| 12 | سیکر زمان زنده و تاریخی | بازسازی وضعیت ناوگان در زمان دلخواه | NOT_STARTED | M | — |
+| 12 | سیکر زمان زنده و تاریخی | بازسازی وضعیت ناوگان در زمان دلخواه | DONE | M | ADR-028 |
 | 13 | فرانمای وضعیت مدیریتی | KPIهای واقعی و drill-down | NOT_STARTED | S | Demo 4 |
 | 14 | مدیریت کاربران، آیکن‌ها و تنظیمات تکمیلی | کاربران، نقش‌ها، آیکن سفارشی و audit viewer | NOT_STARTED | M | — |
 | 15 | ریسپانسیو، Touch و دسترس‌پذیری نهایی | اجرای کامل جریان‌ها روی موبایل و تبلت | NOT_STARTED | L | — |
@@ -270,6 +270,23 @@ Offline/network verification: بدون سرویس خارجی اضافه؛ فیل
 Known limitations: طبق ADR-027 — نمای ذخیره‌شده فقط برای نشست مرورگر جاری است، با رفرش از بین می‌رود (persist شدن به Phase 14 موکول شد). صفحه‌بندی «نمایش بیشتر» (اندازه ۲۰) به‌جای virtualization واقعی استفاده شد؛ برای دهها-صدها مأموریت هم‌زمان کافی است. نمای موبایل (کارت) فاقد سرستون‌های قابل‌مرتب‌سازی و ناوبری کیبوردی ردیف است (محدودیت شناخته‌شده، دو تست مربوطه روی موبایل عمداً skip شدند). Development Pack شانزده‌سندی این فاز فقط تا `00-README.md` تکمیل شد؛ جزئیات در ADR-027.
 Deferred items: persist شدن نمای ذخیره‌شده بین نشست‌ها (Phase 14)، virtualization واقعی جدول در صورت نیاز مقیاس بزرگ، ستون‌های قابل‌مرتب‌سازی/ناوبری کیبورد در نمای کارت موبایل، فیلتر سمت سرور در صورت رشد بسیار بزرگ تعداد مأموریت هم‌زمان.
 Decisions added/changed: ADR-027 اضافه شد — محل نگهداری state تعامل (custom hook تک‌فایلی، نه Context)، فیلتر/جست‌وجو/مرتب‌سازی کاملاً سمت کلاینت، نمای ذخیره‌شده فقط-نشست، و عدم افزودن کتابخانه جدول/virtualization جدید (صفحه‌بندی ساده به‌جای آن).
+
+### Phase 12 — موتور زمان‌بندی (سیکر زمان زنده و تاریخی)
+
+Status: DONE
+Started: 2026-08-06
+Completed: 2026-08-06
+Visible output URL: `/map` (همه نقش‌های احرازهویت‌شده) — همان صفحه فاز ۱۰/۱۱، اکنون با نوار زمان (Timeline Seeker) زیر نقشه: نشانگر حالت زنده/تاریخی، دکمه‌های گام ±۵/±۱۵ دقیقه، Play/Pause، انتخاب سرعت ۰.۲۵×–۸×، ورود مستقیم ساعت:دقیقه، slider درگ‌پذیر و دکمه «بازگشت به اکنون».
+Demo account/data: کاربران Admin/Planner/Viewer از فازهای قبل؛ برای دمو حداقل یک مأموریت `SCHEDULED` با ETA در گذشته یا آینده نزدیک لازم است تا اثر بازسازی زمانی/رسیدن قابل مشاهده باشد — این فاز هیچ داده مرجع جدیدی معرفی نمی‌کند.
+Branch/PR/Commit: مستقیم روی `main`
+Migrations: **ندارد.** این فاز کاملاً سمت کلاینت است؛ هیچ فیلد/جدول DB جدیدی اضافه نشد. تنها تغییر غیر-UI یک اصلاح رفتار cache در `useMapScene` موجود فاز ۱۰ بود (`placeholderData`، بدون تغییر schema/query خود endpoint).
+Key files: `src/lib/domain/timeline-rules.ts` (توابع pure: `defaultTimeRange`، `clampToRange`، `advanceBySpeed`، `percentForTime`/`timeForPercent`، `stepMinutes` — بدون DB/React، با ۱۸ تست واحد)، `src/lib/dates/jalali.ts` (افزوده شد: `tehranCalendarDayRange`/`UtcRange`، استخراج‌شده از فاز ۱۱ برای استفاده مشترک)، `src/features/map/use-timeline-engine.ts` (hook حالت Live/Historical + Playback، تیک پخش با `setInterval` هزارمیلی‌ثانیه‌ای)، `src/features/map/timeline-seeker.tsx` (UI نوار زمان)، `src/features/map/map-view.tsx` (سیم‌کشی `timeline.viewTimeParam` به `useMapScene`، بستن خودکار Playback هنگام ورود به حالت ساخت مأموریت)، `src/features/map/use-map-queries.ts` (افزودن `placeholderData: keepPreviousData` به `useMapScene` — رفع یک رگرسیون واقعی کشف‌شده حین آزمون، نه صرفاً کد فاز ۱۲؛ جزئیات در ADR-028)، `src/components/ui/icons.tsx` (آیکن‌های `play`/`pause`/`skip-back`/`skip-forward`).
+Tests executed: `npm run typecheck`، `npm run lint` (بدون خطا؛ همان ۲ warning پیش‌موجود نامرتبط)، `npm run test` (۲۰۱ تست Vitest شامل ۱۸ تست جدید `timeline-rules.test.ts`: clamp/advance/percent-time roundtrip، گام‌های زمانی مرزی، بازه پیش‌فرض)، `npm run build` (موفق؛ بدون route جدید)، `npx playwright test tests/e2e/timeline-engine.spec.ts` (۲۸ تست در ۴ viewport: پیش‌فرض زنده، پرش-به-زمان تا پس از ETA و نمایش «رسیده»، بازگشت به اکنون، Play/Pause، گام‌های ۵/۱۵ دقیقه، اجبار بازگشت به زنده هنگام ورود به حالت ساخت مأموریت، دسترس‌پذیری کیبورد نوار زمان). سپس اجرای کامل رگرسیون `npx playwright test` روی همه فایل‌های موجود: با `--workers=2` با خطای Node `Zone Allocation failed - process out of memory` قطع شد؛ تکرار با `--workers=1` بعد از ~۲۰ دقیقه با فرایند dev server طولانی‌عمر (نگه‌داشته‌شده توسط `reuseExistingServer: true` در طول این نشست چندساعته) از کار افتاد — تمام تست‌های بعد از آن لحظه، حتی سناریوهای پایه فاز ۱ (ورود ساده)، با `net::ERR_CONNECTION_REFUSED` شکست خوردند که خودش اثبات می‌کند علت تخلیه حافظه فرایند dev server تحت بار انباشته این نشست طولانی است، نه رگرسیون کد فاز ۱۲. برای تفکیک قطعی، فقط فایل‌هایی که از hook مشترک تغییریافته (`useMapScene`) استفاده می‌کنند با dev server تازه (بعد از مرگ فرایند قبلی) دوباره اجرا شدند: `npx playwright test tests/e2e/map-scene.spec.ts tests/e2e/mission-interaction.spec.ts tests/e2e/mission-map-create.spec.ts --workers=1` — همه ۵۸ تست در هر ۴ viewport موفق (۲ مورد skip عمدی از پیش‌موجود فاز ۱۱)، که عدم رگرسیون تغییر `placeholderData` را قطعی می‌کند.
+Manual demo steps: ورود Admin/Planner؛ انتشار یک مأموریت با ETA نزدیک؛ ورود به `/map` → مشاهده برچسب «نمای زنده محاسباتی» زیر نقشه و روی نوار زمان؛ کلیک روی marker خودرو برای انتخاب؛ درگ نوار زمان یا کلیک دکمه‌های گام برای مشاهده بازسازی هم‌زمان marker و ردیف جدول در آن لحظه با برچسب «بازسازی زمانی»؛ کلیک Play برای پخش خودکار و Pause برای توقف؛ کلیک «بازگشت به اکنون»؛ ورود به «ساخت مأموریت از نقشه» حین Playback فعال برای مشاهده بازگشت خودکار به زنده.
+Offline/network verification: بدون سرویس خارجی اضافه؛ نوار زمان فقط پارامتر `viewTime` متفاوتی به همان `GET /api/v1/map/scene` داخلی فاز ۱۰ می‌دهد — هیچ endpoint یا وابستگی شبکه جدیدی معرفی نشد.
+Known limitations: طبق ADR-028 — بازه زمانی هنوز محدود به یک روز تقویمی جلالی است (بدون UI صفحه‌بندی چندروزه). ترجیحات Playback/Timeline (حالت، سرعت، آخرین لحظه) بین بارگذاری‌های صفحه persist نمی‌شوند و همیشه به‌طور قطعی به Live بازمی‌گردند (تصمیم عمدی محصولی، نه محدودیت فنی). Development Pack شانزده‌سندی این فاز فقط تا `00-README.md` تکمیل شد؛ جزئیات در ADR-028.
+Deferred items: بازه زمانی چندروزه با pagination (طبق `PROJECT_SPEC.md` §10)، persist شدن ترجیحات Playback بین نشست‌ها (در صورت تصمیم محصولی آینده)، bookmark زمانی/ضبط پخش/همگام‌سازی چندکاربره (نقاط توسعه آینده طبق Special Requirements سند پیش‌نویس).
+Decisions added/changed: ADR-028 اضافه شد — محل state موتور زمان‌بندی و ترتیب آن نسبت به فاز ۱۱، مکانیزم تیک پخش (`setInterval` هزارمیلی‌ثانیه‌ای)، خارج از دامنه ماندن بازه چندروزه، بدون persistence ترجیحات، اجبار بازگشت به زنده هنگام ورود به حالت ساخت مأموریت، به‌علاوه اصلاح `placeholderData: keepPreviousData` در `useMapScene` (رگرسیون کشف‌شده حین آزمون).
 
 ## قاعده تغییر وضعیت به DONE
 

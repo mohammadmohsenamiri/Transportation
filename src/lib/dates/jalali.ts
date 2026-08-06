@@ -30,6 +30,19 @@ export function utcIsoToJalali(isoOrDate: string | Date): JalaliDateTime {
   return { year: jy, month: jm, day: jd, hour: tehranDate.getUTCHours(), minute: tehranDate.getUTCMinutes() };
 }
 
+export interface UtcRange {
+  from: Date;
+  to: Date;
+}
+
+/** روز تقویمی تهران که `instant` در آن قرار دارد را به‌صورت بازه نیمه‌باز [شروع, پایان) UTC برمی‌گرداند. */
+export function tehranCalendarDayRange(instant: Date): UtcRange {
+  const j = utcIsoToJalali(instant);
+  const from = new Date(jalaliToUtcIso({ year: j.year, month: j.month, day: j.day, hour: 0, minute: 0 }));
+  const to = new Date(from.getTime() + 24 * 60 * 60 * 1000);
+  return { from, to };
+}
+
 export function isValidJalaliDateTime(input: JalaliDateTime): boolean {
   if (!isValidJalaaliDate(input.year, input.month, input.day)) return false;
   if (input.hour < 0 || input.hour > 23) return false;
