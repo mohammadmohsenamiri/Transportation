@@ -3,11 +3,13 @@
 import { useEffect, useRef } from "react";
 import {
   Map as MapLibreMap,
+  Marker,
   NavigationControl,
   Popup,
   LngLatBounds,
   type GeoJSONSource,
   type MapLayerMouseEvent,
+  type MapMouseEvent,
   type ErrorEvent as MapLibreErrorEvent,
 } from "maplibre-gl";
 import "maplibre-gl/dist/maplibre-gl.css";
@@ -55,21 +57,57 @@ function escapeHtml(value: string): string {
     .replace(/"/g, "&quot;");
 }
 
+export type MapInteractionMode = "view" | "select-origin" | "select-destination";
+
 export interface MapLibreMapInnerProps {
   provider: ActiveMapProvider;
   markers: OrgMapMarker[];
   visibleLevels: Set<OrganizationLevelValue>;
   onTileError: () => void;
+  /** حالت انتخاب مبدأ/مقصد برای ساخت مأموریت از داخل نقشه (Phase 8)؛ پیش‌فرض "view" یعنی رفتار قبلی بدون تغییر. */
+  interactionMode?: MapInteractionMode;
+  /** Tap روی یک marker در حالت انتخاب — تصمیم قبول/رد بر اساس سطح (مثلاً فقط WAREHOUSE در مبدأ) به مصرف‌کننده واگذار می‌شود. */
+  onMarkerSelect?: (marker: OrgMapMarker) => void;
+  /** Tap روی نقطه خالی نقشه در حالت select-destination. */
+  onMapPick?: (lngLat: { lat: number; lng: number }) => void;
+  /** نقطه مقصد موقتاً انتخاب‌شده (Tap آزاد) — با یک marker موقت نمایش داده می‌شود. */
+  pinPoint?: { latitude: number; longitude: number } | null;
 }
 
-export function MapLibreMapInner({ provider, markers, visibleLevels, onTileError }: MapLibreMapInnerProps) {
+export function MapLibreMapInner({
+  provider,
+  markers,
+  visibleLevels,
+  onTileError,
+  interactionMode = "view",
+  onMarkerSelect,
+  onMapPick,
+  pinPoint = null,
+}: MapLibreMapInnerProps) {
   const containerRef = useRef<HTMLDivElement | null>(null);
   const mapRef = useRef<MapLibreMap | null>(null);
   const popupRef = useRef<Popup | null>(null);
+  const pinMarkerRef = useRef<Marker | null>(null);
+  const markersRef = useRef<OrgMapMarker[]>(markers);
   const onTileErrorRef = useRef(onTileError);
+  const interactionModeRef = useRef(interactionMode);
+  const onMarkerSelectRef = useRef(onMarkerSelect);
+  const onMapPickRef = useRef(onMapPick);
   useEffect(() => {
     onTileErrorRef.current = onTileError;
   }, [onTileError]);
+  useEffect(() => {
+    markersRef.current = markers;
+  }, [markers]);
+  useEffect(() => {
+    interactionModeRef.current = interactionMode;
+  }, [interactionMode]);
+  useEffect(() => {
+    onMarkerSelectRef.current = onMarkerSelect;
+  }, [onMarkerSelect]);
+  useEffect(() => {
+    onMapPickRef.current = onMapPick;
+  }, [onMapPick]);
 
   // ساخت اولیه نقشه — فقط یک‌بار در mount اجرا می‌شود؛ تغییر provider نیاز به remount کامل دارد
   useEffect(() => {
@@ -107,6 +145,16 @@ export function MapLibreMapInner({ provider, markers, visibleLevels, onTileError
       // خطای تکی کاشی نباید کل shell را از کار بیندازد؛ فقط به والد اطلاع می‌دهیم
       console.warn("خطای MapLibre:", event.error);
       onTileErrorRef.current();
+    });
+
+    // Tap روی نقطه خالی نقشه — قبل از "load" هم ثبت می‌شود (نه داخل آن) تا کلیک زودهنگام کاربر
+    // (پیش از آماده‌شدن کامل style/لایه‌ها) گم نشود؛ queryRenderedFeatures پیش از افزودن لایه‌ها
+    // به‌سادگی آرایه خالی برمی‌گرداند.
+    map.on("click", (event: MapMouseEvent) => {
+      if (interactionModeRef.current !== "select-destination") return;
+      const hits = map.queryRenderedFeatures(event.point, { layers: [CLUSTER_LAYER_ID, POINT_LAYER_ID] });
+      if (hits.length > 0) return; // کلیک روی marker/cluster از handlerهای اختصاصی لایه مدیریت می‌شود
+      onMapPickRef.current?.({ lat: event.lngLat.lat, lng: event.lngLat.lng });
     });
 
     map.on("load", () => {
@@ -189,7 +237,14 @@ export function MapLibreMapInner({ provider, markers, visibleLevels, onTileError
       map.on("click", POINT_LAYER_ID, (event: MapLayerMouseEvent) => {
         const feature = event.features?.[0];
         if (!feature || feature.geometry.type !== "Point") return;
-        const props = feature.properties as { name: string; code: string; level: OrganizationLevelValue };
+        const props = feature.properties as { id: string; name: string; code: string; level: OrganizationLevelValue };
+
+        if (interactionModeRef.current !== "view") {
+          const marker = markersRef.current.find((m) => m.id === props.id);
+          if (marker) onMarkerSelectRef.current?.(marker);
+          return;
+        }
+
         const coordinates = feature.geometry.coordinates.slice() as [number, number];
 
         const content = document.createElement("div");
@@ -215,13 +270,14 @@ export function MapLibreMapInner({ provider, markers, visibleLevels, onTileError
           map.getCanvas().style.cursor = "pointer";
         });
         map.on("mouseleave", layerId, () => {
-          map.getCanvas().style.cursor = "";
+          map.getCanvas().style.cursor = interactionModeRef.current !== "view" ? "crosshair" : "";
         });
       });
     });
 
     return () => {
       popupRef.current?.remove();
+      pinMarkerRef.current?.remove();
       map.remove();
       mapRef.current = null;
     };
@@ -237,6 +293,45 @@ export function MapLibreMapInner({ provider, markers, visibleLevels, onTileError
       source.setData(toFeatureCollection(markers, visibleLevels));
     }
   }, [markers, visibleLevels]);
+
+  // در حالت انتخاب مبدأ، فقط marker انبار قابل انتخاب است؛ بقیه سطوح کم‌رنگ می‌شوند تا گمراه‌کننده نباشند
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!map || !map.getLayer(POINT_LAYER_ID)) return;
+    const opacity =
+      interactionMode === "select-origin"
+        ? (["case", ["==", ["get", "level"], "WAREHOUSE"], 1, 0.25] as unknown as number)
+        : 1;
+    map.setPaintProperty(POINT_LAYER_ID, "circle-opacity", opacity);
+    map.getCanvas().style.cursor = interactionMode !== "view" ? "crosshair" : "";
+  }, [interactionMode]);
+
+  // نمایش/به‌روزرسانی marker موقت مقصد آزاد (Tap روی نقطه خالی نقشه در حالت select-destination)
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!map) return;
+
+    function sync() {
+      if (!map) return;
+      pinMarkerRef.current?.remove();
+      pinMarkerRef.current = null;
+      if (!pinPoint) return;
+      const el = document.createElement("div");
+      Object.assign(el.style, {
+        width: "22px",
+        height: "22px",
+        borderRadius: "9999px 9999px 9999px 0",
+        transform: "rotate(45deg)",
+        background: "#ef4444",
+        border: "2px solid white",
+        boxShadow: "0 1px 4px rgba(0,0,0,0.35)",
+      } satisfies Partial<CSSStyleDeclaration>);
+      pinMarkerRef.current = new Marker({ element: el, anchor: "bottom" }).setLngLat([pinPoint.longitude, pinPoint.latitude]).addTo(map);
+    }
+
+    if (map.loaded()) sync();
+    else map.once("load", sync);
+  }, [pinPoint]);
 
   return <div ref={containerRef} className="h-full w-full" />;
 }

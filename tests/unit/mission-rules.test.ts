@@ -5,6 +5,7 @@ import {
   isMissionOperationallyLocked,
   missionTimeRangesOverlap,
   shipmentDestinationKey,
+  shipmentMatchesDestinationPoint,
 } from "@/lib/domain/mission-rules";
 
 const warehouseA = "11111111-1111-4111-8111-111111111111";
@@ -107,5 +108,35 @@ describe("deriveMissionDisplayStatus / isMissionOperationallyLocked", () => {
   it("never locks a DRAFT mission", () => {
     const mission = { persistedStatus: "DRAFT" as const, startAt, estimatedArrivalAt };
     expect(isMissionOperationallyLocked(mission, new Date("2026-01-01T10:00:00Z"))).toBe(false);
+  });
+});
+
+describe("shipmentMatchesDestinationPoint", () => {
+  const shipmentWithUnit = { destinationOrganizationUnitId: orgUnitX, destinationLatitude: 35.6892, destinationLongitude: 51.389 };
+  const shipmentWithCoords = { destinationOrganizationUnitId: null, destinationLatitude: 35.6892, destinationLongitude: 51.389 };
+
+  it("matches by organization-unit id regardless of coordinate distance", () => {
+    const farPoint = { organizationUnitId: orgUnitX, latitude: 10, longitude: 10 };
+    expect(shipmentMatchesDestinationPoint(shipmentWithUnit, farPoint, 1000)).toBe(true);
+  });
+
+  it("does not match a different organization-unit id even if coordinates happen to be far outside tolerance", () => {
+    const otherUnitPoint = { organizationUnitId: "different-unit", latitude: 10, longitude: 10 };
+    expect(shipmentMatchesDestinationPoint(shipmentWithUnit, otherUnitPoint, 1000)).toBe(false);
+  });
+
+  it("falls back to coordinate distance when no organization-unit id is provided", () => {
+    const nearPoint = { organizationUnitId: null, latitude: 35.6893, longitude: 51.3891 };
+    expect(shipmentMatchesDestinationPoint(shipmentWithCoords, nearPoint, 1000)).toBe(true);
+  });
+
+  it("rejects a coordinate point outside tolerance", () => {
+    const farPoint = { organizationUnitId: null, latitude: 36.297, longitude: 59.6062 };
+    expect(shipmentMatchesDestinationPoint(shipmentWithCoords, farPoint, 1000)).toBe(false);
+  });
+
+  it("still matches by nearby coordinates even when the tapped point has no organization-unit id and the shipment does", () => {
+    const nearPoint = { organizationUnitId: null, latitude: 35.6893, longitude: 51.3891 };
+    expect(shipmentMatchesDestinationPoint(shipmentWithUnit, nearPoint, 1000)).toBe(true);
   });
 });

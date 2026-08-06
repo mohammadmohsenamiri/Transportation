@@ -1,3 +1,5 @@
+import { haversineDistanceMeters } from "@/lib/geo/distance";
+
 export interface ShipmentCompatibilitySummary {
   originWarehouseId: string;
   destinationOrganizationUnitId: string | null;
@@ -22,6 +24,38 @@ export function areShipmentsCompatible(shipments: readonly ShipmentCompatibility
   const originId = shipments[0].originWarehouseId;
   const destinationKey = shipmentDestinationKey(shipments[0]);
   return shipments.every((s) => s.originWarehouseId === originId && shipmentDestinationKey(s) === destinationKey);
+}
+
+export interface MapPickedPoint {
+  organizationUnitId: string | null;
+  latitude: number;
+  longitude: number;
+}
+
+export interface ShipmentDestinationPoint {
+  destinationOrganizationUnitId: string | null;
+  destinationLatitude: number;
+  destinationLongitude: number;
+}
+
+/**
+ * تطبیق مقصد یک مرسوله با نقطه انتخاب‌شده روی نقشه (Phase 8، ساخت مأموریت از داخل نقشه):
+ * تطبیق دقیق در صورت یکسان بودن شناسه گره سازمانی، وگرنه نزدیکی مختصات در محدوده tolerance
+ * (چون Tap کاربر روی نقشه نمی‌تواند به دقت مختصات ثبت‌شده مرسوله برسد).
+ */
+export function shipmentMatchesDestinationPoint(
+  shipment: ShipmentDestinationPoint,
+  point: MapPickedPoint,
+  toleranceMeters: number,
+): boolean {
+  if (point.organizationUnitId && shipment.destinationOrganizationUnitId === point.organizationUnitId) {
+    return true;
+  }
+  const distance = haversineDistanceMeters(
+    { latitude: shipment.destinationLatitude, longitude: shipment.destinationLongitude },
+    { latitude: point.latitude, longitude: point.longitude },
+  );
+  return distance <= toleranceMeters;
 }
 
 export interface MissionTimeRange {
