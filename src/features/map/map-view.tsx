@@ -5,12 +5,14 @@ import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Panel } from "@/components/ui/panel";
 import { Icon } from "@/components/ui/icons";
-import { useActiveMapProvider, useOrgUnitsForMap } from "@/features/map/use-map-queries";
+import { useActiveMapProvider, useMapScene, useOrgUnitsForMap } from "@/features/map/use-map-queries";
+import { useRouteDetail } from "@/features/routes/use-route-queries";
 import { levelColor, levelDisplayLabel, levelOrder } from "@/features/map/level-styles";
 import type { OrganizationLevelValue } from "@/features/organization/level-labels";
 import type { OrgMapMarker } from "@/features/map/types";
-import type { MapInteractionMode } from "@/features/map/maplibre-map-inner";
+import type { MapInteractionMode, SelectedRoutePreview } from "@/features/map/maplibre-map-inner";
 import { MissionMapCreatePanel, type MissionMapDestination } from "@/features/missions/mission-map-create-panel";
+import { MissionDetailPanel } from "@/features/map/mission-detail-panel";
 
 const MapLibreMapInner = dynamic(
   () => import("@/features/map/maplibre-map-inner").then((mod) => mod.MapLibreMapInner),
@@ -45,10 +47,12 @@ export function MapView({ canCreateMission = false }: MapViewProps) {
   const router = useRouter();
   const providerQuery = useActiveMapProvider();
   const markersQuery = useOrgUnitsForMap();
+  const sceneQuery = useMapScene();
   const [visibleLevels, setVisibleLevels] = useState<Set<OrganizationLevelValue>>(
     () => new Set(levelOrder),
   );
   const [tileDegraded, setTileDegraded] = useState(false);
+  const [selectedMissionId, setSelectedMissionId] = useState<string | null>(null);
 
   const [missionMode, setMissionMode] = useState(false);
   const [pickStage, setPickStage] = useState<PickStage>("origin");
@@ -77,6 +81,25 @@ export function MapView({ canCreateMission = false }: MapViewProps) {
     return warehouses.filter((w) => w.name.toLowerCase().includes(q) || w.code.toLowerCase().includes(q));
   }, [markers, originSearch]);
 
+  // خودروهای فاز ۱۰ فقط در حالت عادی نقشه نمایش داده می‌شوند؛ در حین ساخت مأموریت از نقشه (فاز ۸)
+  // برای جلوگیری از شلوغی/تداخل کلیک با marker انبار پنهان می‌شوند.
+  const vehicles = useMemo(() => (missionMode ? [] : (sceneQuery.data?.missions ?? [])), [missionMode, sceneQuery.data]);
+  const selectedMission = useMemo(() => vehicles.find((v) => v.missionId === selectedMissionId) ?? null, [vehicles, selectedMissionId]);
+  const selectedRouteDetailQuery = useRouteDetail(selectedMission?.routeId ?? undefined);
+
+  const selectedRoutePreview = useMemo<SelectedRoutePreview | null>(() => {
+    if (!selectedMission) return null;
+    const origin = { latitude: selectedMission.originLatitude, longitude: selectedMission.originLongitude };
+    const destination = { latitude: selectedMission.destinationLatitude, longitude: selectedMission.destinationLongitude };
+
+    if (selectedMission.routeId && selectedRouteDetailQuery.data) {
+      const sorted = [...selectedRouteDetailQuery.data.points].sort((a, b) => a.sequence - b.sequence);
+      return { points: sorted.map((p) => ({ latitude: p.latitude, longitude: p.longitude })), isFallbackDirect: false, origin, destination };
+    }
+    // مسیر واقعی هنوز lazy-load نشده یا مأموریت اصلاً مسیر ندارد — تا بارگذاری، خط مستقیم fallback نمایش داده می‌شود
+    return { points: [origin, destination], isFallbackDirect: selectedMission.isFallbackDirect || !selectedMission.routeId, origin, destination };
+  }, [selectedMission, selectedRouteDetailQuery.data]);
+
   function toggleLevel(level: OrganizationLevelValue) {
     setVisibleLevels((prev) => {
       const next = new Set(prev);
@@ -94,6 +117,7 @@ export function MapView({ canCreateMission = false }: MapViewProps) {
     setOriginSearch("");
     setManualLat("");
     setManualLng("");
+    setSelectedMissionId(null);
   }
 
   function exitMissionMode() {
@@ -262,10 +286,21 @@ export function MapView({ canCreateMission = false }: MapViewProps) {
               onMarkerSelect={pickStage === "origin" ? selectOrigin : pickStage === "destination" ? selectDestinationFromMarker : undefined}
               onMapPick={pickStage === "destination" ? selectDestinationFromMapPick : undefined}
               pinPoint={destinationPoint ? { latitude: destinationPoint.latitude, longitude: destinationPoint.longitude } : null}
+              vehicles={vehicles}
+              selectedMissionId={selectedMissionId}
+              onVehicleSelect={setSelectedMissionId}
+              selectedRoutePreview={selectedRoutePreview}
             />
             {tileDegraded && (
               <div className="pointer-events-none absolute inset-x-3 top-3 rounded-xl bg-[var(--color-warning-bg)] px-3 py-2 text-xs text-[var(--color-warning)] shadow">
                 بارگذاری برخی کاشی‌های نقشه ناموفق بود؛ Provider را از تنظیمات سامانه بررسی کنید.
+              </div>
+            )}
+            {!missionMode && vehicles.length > 0 && (
+              <div className="pointer-events-none absolute inset-x-3 bottom-3 flex justify-center">
+                <span className="rounded-full bg-[var(--color-bg-elevated)]/90 px-3 py-1 text-[11px] font-medium text-[var(--color-text-muted)] shadow">
+                  نمای زنده محاسباتی — موقعیت‌ها تقریبی هستند
+                </span>
               </div>
             )}
           </div>
@@ -283,9 +318,13 @@ export function MapView({ canCreateMission = false }: MapViewProps) {
         />
       )}
 
-      {!missionMode && (
+      {!missionMode && selectedMission && (
+        <MissionDetailPanel mission={selectedMission} onClose={() => setSelectedMissionId(null)} onViewFullDetails={(missionId) => router.push(`/missions/${missionId}`)} />
+      )}
+
+      {!missionMode && !selectedMission && (
         <p className="text-xs text-[var(--color-text-subtle)]">
-          موقعیت دفاتر و انبارها بر اساس مختصات ثبت‌شده در ساختار سازمانی است. برای مشاهده جزئیات هر نقطه روی آن ضربه بزنید یا کلیک کنید.
+          موقعیت دفاتر و انبارها بر اساس مختصات ثبت‌شده در ساختار سازمانی است. برای مشاهده جزئیات هر نقطه یا خودرو روی آن ضربه بزنید یا کلیک کنید.
         </p>
       )}
     </div>

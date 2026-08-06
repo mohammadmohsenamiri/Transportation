@@ -1,6 +1,6 @@
 # وضعیت فازهای پیاده‌سازی
 
-آخرین به‌روزرسانی: 2026-08-06 (Phase 9)
+آخرین به‌روزرسانی: 2026-08-06 (Phase 10)
 
 ## خلاصه وضعیت
 
@@ -18,7 +18,7 @@
 | 7 | برنامه‌ریزی مأموریت از فرم | ساخت Draft، تخمین و انتشار مأموریت | DONE | M | ADR-018/019/021 |
 | 8 | تعریف مأموریت از داخل نقشه | ساخت و انتشار مأموریت بدون ترک نقشه | DONE | M | Demo 2 |
 | 9 | موتور موقعیت تقریبی | لایه محاسباتی pure (بدون UI) — Development Pack کامل در `docs/phase-09-simulation-engine/` | DONE | M | بدون UI، طبق ADR-024 |
-| 10 | نقشه عملیاتی پایه و حرکت خودروها | خودروهای مأموریت‌دار در موقعیت تقریبی روی نقشه | NOT_STARTED | L | Demo 3 |
+| 10 | نقشه عملیاتی پایه و حرکت خودروها | خودروهای مأموریت‌دار در موقعیت تقریبی روی نقشه | DONE | L | Demo 3؛ ADR-025 |
 | 11 | جدول مأموریت، انتخاب متقابل و فیلترها | همگام‌سازی نقشه/جدول و فیلترهای عملیاتی | NOT_STARTED | M | — |
 | 12 | سیکر زمان زنده و تاریخی | بازسازی وضعیت ناوگان در زمان دلخواه | NOT_STARTED | M | — |
 | 13 | فرانمای وضعیت مدیریتی | KPIهای واقعی و drill-down | NOT_STARTED | S | Demo 4 |
@@ -236,6 +236,23 @@ Offline/network verification: بدون وابستگی جدید؛ کل فاز م�
 Known limitations: طبق `docs/phase-09-simulation-engine/11-OUT_OF_SCOPE.md` — بدون رندر نقشه (فاز ۱۰)، بدون صفحه simulation-lab (به تصمیم فاز ۱۰ موکول شد)، بدون endpoint شبیه‌سازی دسته‌ای چند-مأموریتی (فاز ۱۰ طراحی می‌کند)، بدون caching (نیازی در مقیاس فعلی احساس نشد)، interpolation خطی lat/lng نه geodesic-exact (طبق ADR-P9-02 پذیرفتنی).
 Deferred items: رندر نقشه عملیاتی و marker متحرک (Phase 10)، تصمیم درباره صفحه simulation-lab (Phase 10)، سیکر زمان تاریخی (Phase 12)، endpoint شبیه‌سازی دسته‌ای (Phase 10، در صورت نیاز).
 Decisions added/changed: این فاز خودش یک Development Pack کامل (۱۶ سند، `docs/phase-09-simulation-engine/`) با ADR-P9-01 تا ADR-P9-09 دارد که پیش از این پیاده‌سازی نوشته شد؛ ADR-024 (سند اصلی `docs/DECISIONS.md`) نیز همان تصمیم حذف UI از این فاز را ثبت کرده است. هیچ تصمیم معماری جدیدی حین پیاده‌سازی لازم نشد — پیاده‌سازی دقیقاً طبق مستندات از پیش نوشته‌شده انجام شد، بدون انحراف.
+
+### Phase 10 — نقشه عملیاتی پایه و حرکت خودروها
+
+Status: DONE
+Started: 2026-08-06
+Completed: 2026-08-06
+Visible output URL: `/map` (همه نقش‌های احرازهویت‌شده: Admin، STATUS_VIEWER، MISSION_PLANNER) — همان صفحه فازهای ۴/۸، اکنون با marker خودروهای مأموریت‌دار در موقعیت تقریبی. طبق ADR-025 عنوان شیپ‌شده «نقشه عملیات» (نه «نمای پایش» از اسناد مرجع) عمداً حفظ شد.
+Demo account/data: کاربران Admin/Planner/Viewer از فازهای قبل؛ برای دمو حداقل یک مأموریت `SCHEDULED` (فاز ۷/۸) لازم است — این فاز هیچ داده مرجع جدیدی معرفی نمی‌کند.
+Branch/PR/Commit: مستقیم روی `main`
+Migrations: **ندارد.** این فاز صرفاً مصرف‌کننده خروجی موتور فاز ۹ (`simulateMissionPosition`/`calculateMissionGeometry`، بدون تغییر) است؛ هیچ فیلد/جدول جدیدی لازم نشد.
+Key files: `src/server/services/map-scene-service.ts` (تابع `getMapScene` — حلقه روی مأموریت‌های `SCHEDULED`/`deletedAt:null` و فراخوانی موتور فاز ۹ برای هرکدام؛ منطق شبیه‌سازی دسته‌ای که فاز ۹ صراحتاً به این فاز موکول کرده بود)، `src/app/api/v1/map/scene/route.ts` (endpoint فقط-خواندنی، همان سه نقش `/map`)، `src/features/map/types.ts` (`MapSceneMission`/`MapScene`)، `src/features/map/mission-marker-styles.ts` (رنگ marker بر اساس وضعیت نمایشی)، `src/features/map/api.ts`/`use-map-queries.ts` (`useMapScene` با `refetchInterval` پنج‌ثانیه‌ای در حالت زنده، غیرفعال هنگام `viewTime` ثابت)، `src/features/map/maplibre-map-inner.tsx` (marker خودرو DOM-based با SVG ساخته‌شده یک‌بار و به‌روزرسانی attribute-only برای جلوگیری از churn هر ۵ ثانیه، لایه خط مسیر/خط مستقیم منتخب، marker پرچم مبدأ/مقصد highlight)، `src/features/map/mission-detail-panel.tsx` (پنل جزئیات با برچسب اجباری «نمای زنده محاسباتی»)، `src/features/map/map-view.tsx` (سیم‌کشی: مخفی‌کردن خودروها در حالت ساخت مأموریت فاز ۸، sync انتخاب marker↔پنل، محاسبه پیش‌نمایش مسیر منتخب با fallback خط مستقیم هنگام نبود مسیر یا در حین lazy-load).
+Tests executed: `npm run typecheck`، `npm run lint` (بدون خطا؛ ۲ warning از پیش‌موجود در `map-provider-form.tsx`/`organization-form.tsx` نامرتبط به این فاز)، `npm run test` (۱۵۵ تست Vitest — بدون تست واحد جدید؛ این فاز فقط از توابع pure فاز ۹/۵/۷ بدون تغییر استفاده مجدد می‌کند)، `npm run build` (موفق؛ یک route جدید: `/api/v1/map/scene`)، `npx playwright test tests/e2e/map-scene.spec.ts` (۲۰ تست در ۴ viewport: صحنه در سه لحظه پیش از شروع/میانه مسیر/پس از ETA با وضعیت و موقعیت درست، `isFallbackDirect=true` برای مأموریت بدون مسیر، دسترسی خواندن STATUS_VIEWER، رد ۴۰۱ بدون ورود، و یک سناریوی کامل UI: کلیک روی marker خودرو → باز شدن پنل جزئیات با برچسب «نمای زنده محاسباتی» و یادداشت «بدون مسیر تعریف‌شده»)، سپس اجرای کامل رگرسیون `npx playwright test` روی همه فایل‌های موجود بدون خطای جدید.
+Manual demo steps: ورود Admin/Planner؛ انتشار سه مأموریت — یکی با مسیر واقعی، یکی بدون مسیر (fallback خط مستقیم)، یکی با `startAt` گذشته (برای مشاهده «رسیده»)؛ ورود به `/map` → مشاهده marker رنگی هر خودرو با جهت حرکت و برچسب دائمی «نمای زنده محاسباتی — موقعیت‌ها تقریبی هستند»؛ کلیک روی marker → پنل جزئیات (مبدأ←مقصد، ETA، پیشرفت، مرسوله‌ها) و ترسیم مسیر/خط‌چین منتخب با highlight مبدأ/مقصد باز می‌شود؛ کلیک دوباره یا دکمه «بستن» برای خروج از انتخاب.
+Offline/network verification: بدون سرویس خارجی اضافه؛ همان MapProvider پیکربندی‌شده فاز ۴؛ refresh پنج‌ثانیه‌ای صرفاً `GET /api/v1/map/scene` داخلی را دوباره فرامی‌خواند، بدون درخواست شبکه‌ای جدید به بیرون؛ موقعیت محاسبه‌شده هرگز در DB نوشته نمی‌شود (طبق قاعده صریح CLAUDE.md بخش ۲).
+Known limitations: طبق دامنه مصوب فاز ۱۰ (`IMPLEMENTATION_PLAN.md`) — بدون جدول مأموریت کنار نقشه و همگام‌سازی متقابل جدول/نقشه (Phase 11)، بدون فیلتر عملیاتی (Phase 11)، بدون سیکر زمان تاریخی/آینده با UI (Phase 12؛ فقط پارامتر `viewTime` سطح API از فاز ۹ موجود است)، بدون clustering برای خودروها (تراکم فعلی کم است؛ در صورت نیاز واقعی به Phase 15 موکول می‌شود)، آیکن اختصاصی خودرو (کتابخانه IconAsset، Phase 14) هنوز جایگزین SVG ساده فعلی نشده. Development Pack شانزده‌سندی این فاز (طبق درخواست صریح) فقط تا `00-README.md` تکمیل شد و پیاده‌سازی مستقیماً بر اساس آن به‌علاوه اسناد الزام‌آور موجود انجام شد — جزئیات در ADR-025.
+Deferred items: جدول مأموریت + همگام‌سازی متقابل نقشه/جدول (Phase 11)، فیلترهای عملیاتی (Phase 11)، UI سیکر زمان تاریخی/آینده (Phase 12)، clustering خودرو در صورت نیاز مقیاس (Phase 15)، آیکن اختصاصی خودرو (Phase 14).
+Decisions added/changed: ADR-025 اضافه شد — تصمیم تکمیل مستقیم فاز ۱۰ به‌جای ادامه Development Pack شانزده‌سندی (پس از تأیید صریح مالک محصول برای پیاده‌سازی مستقیم)، و حفظ عنوان شیپ‌شده «نقشه عملیات» به‌جای «نمای پایش» اسناد مرجع.
 
 ## قاعده تغییر وضعیت به DONE
 

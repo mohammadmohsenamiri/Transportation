@@ -1,5 +1,5 @@
 import { ApiError } from "@/lib/http/api-client-error";
-import type { ActiveMapProvider, OrgMapMarker } from "@/features/map/types";
+import type { ActiveMapProvider, MapScene, OrgMapMarker } from "@/features/map/types";
 
 async function parseResponse<T>(response: Response): Promise<T> {
   const data = await response.json();
@@ -17,4 +17,10 @@ export async function fetchOrgUnitsForMap(): Promise<OrgMapMarker[]> {
   const response = await fetch("/api/v1/map/organization-units");
   const data = await parseResponse<{ items: OrgMapMarker[] }>(response);
   return data.items;
+}
+
+export async function fetchMapScene(viewTime?: string): Promise<MapScene> {
+  const query = viewTime ? `?viewTime=${encodeURIComponent(viewTime)}` : "";
+  const response = await fetch(`/api/v1/map/scene${query}`);
+  return parseResponse<MapScene>(response);
 }

@@ -13,15 +13,18 @@ import {
   type ErrorEvent as MapLibreErrorEvent,
 } from "maplibre-gl";
 import "maplibre-gl/dist/maplibre-gl.css";
-import type { ActiveMapProvider, OrgMapMarker } from "@/features/map/types";
+import type { ActiveMapProvider, MapSceneMission, OrgMapMarker } from "@/features/map/types";
 import { mapLibreScheme } from "@/lib/domain/map-provider-rules";
 import { levelColor, levelDisplayLabel } from "@/features/map/level-styles";
+import { vehicleStatusColor } from "@/features/map/mission-marker-styles";
 import type { OrganizationLevelValue } from "@/features/organization/level-labels";
 
 const SOURCE_ID = "organization-units";
 const CLUSTER_LAYER_ID = "organization-clusters";
 const CLUSTER_RING_LAYER_ID = "organization-cluster-rings";
 const POINT_LAYER_ID = "organization-points";
+const ROUTE_LINE_SOURCE_ID = "selected-mission-route";
+const ROUTE_LINE_LAYER_ID = "selected-mission-route-line";
 
 function buildTileUrls(provider: ActiveMapProvider): string[] {
   const subdomains = provider.subdomains && provider.subdomains.length > 0 ? provider.subdomains : null;
@@ -57,7 +60,92 @@ function escapeHtml(value: string): string {
     .replace(/"/g, "&quot;");
 }
 
+function emptyLineString() {
+  return { type: "Feature" as const, properties: {}, geometry: { type: "LineString" as const, coordinates: [] as [number, number][] } };
+}
+
+const VEHICLE_MARKER_SVG_NS = "http://www.w3.org/2000/svg";
+
+function buildVehicleMarkerSvg(size: number): SVGSVGElement {
+  const svg = document.createElementNS(VEHICLE_MARKER_SVG_NS, "svg");
+  svg.setAttribute("width", String(size));
+  svg.setAttribute("height", String(size));
+  svg.setAttribute("viewBox", "0 0 24 24");
+
+  const circle = document.createElementNS(VEHICLE_MARKER_SVG_NS, "circle");
+  circle.setAttribute("cx", "12");
+  circle.setAttribute("cy", "12");
+  circle.setAttribute("r", "10");
+  circle.setAttribute("stroke", "white");
+  circle.setAttribute("stroke-width", "2");
+  circle.dataset.role = "vehicle-marker-circle";
+
+  // فلش سفید داخل دایره رنگی؛ چرخش آن بر اساس bearing اعمال می‌شود (۰ درجه = شمال = بالا)
+  const path = document.createElementNS(VEHICLE_MARKER_SVG_NS, "path");
+  path.setAttribute("d", "M12 5 L16 15 L12 12.2 L8 15 Z");
+  path.setAttribute("fill", "white");
+
+  svg.appendChild(circle);
+  svg.appendChild(path);
+  return svg;
+}
+
+/**
+ * برخلاف نسخه اولیه که با هر refresh دوره‌ای صحنه نقشه (هر ۵ ثانیه) کل innerHTML را بازسازی
+ * می‌کرد، این نسخه فقط attributeهایی را که واقعاً تغییر کرده‌اند به‌روزرسانی می‌کند — گره‌های SVG
+ * هرگز جایگزین نمی‌شوند. این هم از ناپایداری DOM هنگام کلیک کاربر/تست جلوگیری می‌کند و هم رفتار
+ * صحیح‌تری برای مأموریتی است که موقعیتش واقعاً عوض نشده (مثلاً هنوز WAITING است).
+ */
+function applyVehicleMarkerVisual(el: HTMLDivElement, vehicle: MapSceneMission, selected: boolean): void {
+  const size = selected ? 30 : 24;
+  const color = vehicleStatusColor[vehicle.status] ?? "#64748b";
+  const rotation = vehicle.bearingDegrees ?? 0;
+
+  el.dataset.missionId = vehicle.missionId;
+  el.style.width = `${size}px`;
+  el.style.height = `${size}px`;
+  el.style.cursor = "pointer";
+  el.style.filter = selected ? "drop-shadow(0 0 5px rgba(47,111,237,0.85))" : "";
+
+  let svg = el.querySelector("svg");
+  if (!svg) {
+    svg = buildVehicleMarkerSvg(size);
+    el.appendChild(svg);
+  }
+  svg.setAttribute("width", String(size));
+  svg.setAttribute("height", String(size));
+  svg.style.transform = `rotate(${rotation}deg)`;
+  svg.querySelector('[data-role="vehicle-marker-circle"]')?.setAttribute("fill", color);
+}
+
+function createVehicleMarkerElement(vehicle: MapSceneMission, selected: boolean): HTMLDivElement {
+  const el = document.createElement("div");
+  applyVehicleMarkerVisual(el, vehicle, selected);
+  return el;
+}
+
+function createFlagMarkerElement(color: string): HTMLDivElement {
+  const el = document.createElement("div");
+  Object.assign(el.style, {
+    width: "24px",
+    height: "24px",
+    borderRadius: "9999px 9999px 9999px 0",
+    transform: "rotate(45deg)",
+    background: color,
+    border: "2px solid white",
+    boxShadow: "0 1px 4px rgba(0,0,0,0.35)",
+  } satisfies Partial<CSSStyleDeclaration>);
+  return el;
+}
+
 export type MapInteractionMode = "view" | "select-origin" | "select-destination";
+
+export interface SelectedRoutePreview {
+  points: readonly { latitude: number; longitude: number }[];
+  isFallbackDirect: boolean;
+  origin: { latitude: number; longitude: number };
+  destination: { latitude: number; longitude: number };
+}
 
 export interface MapLibreMapInnerProps {
   provider: ActiveMapProvider;
@@ -72,6 +160,14 @@ export interface MapLibreMapInnerProps {
   onMapPick?: (lngLat: { lat: number; lng: number }) => void;
   /** نقطه مقصد موقتاً انتخاب‌شده (Tap آزاد) — با یک marker موقت نمایش داده می‌شود. */
   pinPoint?: { latitude: number; longitude: number } | null;
+  /** خودروهای مأموریت‌دار برای رسم روی نقشه (Phase 10) — از GET /api/v1/map/scene. */
+  vehicles?: MapSceneMission[];
+  /** مأموریت انتخاب‌شده جاری؛ marker متناظر halo می‌گیرد. */
+  selectedMissionId?: string | null;
+  /** Tap روی یک vehicle marker. */
+  onVehicleSelect?: (missionId: string) => void;
+  /** مسیر/خط مستقیم و مبدأ/مقصد مأموریت انتخاب‌شده برای highlight — فقط برای مأموریت انتخاب‌شده rendered می‌شود. */
+  selectedRoutePreview?: SelectedRoutePreview | null;
 }
 
 export function MapLibreMapInner({
@@ -83,16 +179,24 @@ export function MapLibreMapInner({
   onMarkerSelect,
   onMapPick,
   pinPoint = null,
+  vehicles = [],
+  selectedMissionId = null,
+  onVehicleSelect,
+  selectedRoutePreview = null,
 }: MapLibreMapInnerProps) {
   const containerRef = useRef<HTMLDivElement | null>(null);
   const mapRef = useRef<MapLibreMap | null>(null);
   const popupRef = useRef<Popup | null>(null);
   const pinMarkerRef = useRef<Marker | null>(null);
   const markersRef = useRef<OrgMapMarker[]>(markers);
+  const vehicleMarkersRef = useRef<Map<string, Marker>>(new Map());
+  const originHighlightMarkerRef = useRef<Marker | null>(null);
+  const destinationHighlightMarkerRef = useRef<Marker | null>(null);
   const onTileErrorRef = useRef(onTileError);
   const interactionModeRef = useRef(interactionMode);
   const onMarkerSelectRef = useRef(onMarkerSelect);
   const onMapPickRef = useRef(onMapPick);
+  const onVehicleSelectRef = useRef(onVehicleSelect);
   useEffect(() => {
     onTileErrorRef.current = onTileError;
   }, [onTileError]);
@@ -108,6 +212,9 @@ export function MapLibreMapInner({
   useEffect(() => {
     onMapPickRef.current = onMapPick;
   }, [onMapPick]);
+  useEffect(() => {
+    onVehicleSelectRef.current = onVehicleSelect;
+  }, [onVehicleSelect]);
 
   // ساخت اولیه نقشه — فقط یک‌بار در mount اجرا می‌شود؛ تغییر provider نیاز به remount کامل دارد
   useEffect(() => {
@@ -216,6 +323,15 @@ export function MapLibreMapInner({
         },
       });
 
+      map.addSource(ROUTE_LINE_SOURCE_ID, { type: "geojson", data: emptyLineString() });
+      map.addLayer({
+        id: ROUTE_LINE_LAYER_ID,
+        type: "line",
+        source: ROUTE_LINE_SOURCE_ID,
+        layout: { "line-cap": "round", "line-join": "round" },
+        paint: { "line-color": "#2f6fed", "line-width": 4, "line-opacity": 0.85 },
+      });
+
       if (markers.length > 0) {
         const bounds = new LngLatBounds();
         markers.forEach((marker) => bounds.extend([marker.longitude, marker.latitude]));
@@ -278,6 +394,14 @@ export function MapLibreMapInner({
     return () => {
       popupRef.current?.remove();
       pinMarkerRef.current?.remove();
+      // عمداً آخرین مقدار ref را در لحظه unmount می‌خوانیم (نه مقدار زمان mount)، چون marker خودروها
+      // توسط افکت جداگانه sync می‌شوند؛ خود شیء Map هرگز بازساخته نمی‌شود، فقط محتوایش تغییر می‌کند.
+      /* eslint-disable react-hooks/exhaustive-deps */
+      vehicleMarkersRef.current.forEach((marker) => marker.remove());
+      vehicleMarkersRef.current.clear();
+      /* eslint-enable react-hooks/exhaustive-deps */
+      originHighlightMarkerRef.current?.remove();
+      destinationHighlightMarkerRef.current?.remove();
       map.remove();
       mapRef.current = null;
     };
@@ -332,6 +456,95 @@ export function MapLibreMapInner({
     if (map.loaded()) sync();
     else map.once("load", sync);
   }, [pinPoint]);
+
+  // همگام‌سازی marker خودروها (Phase 10) — یک DOM Marker به‌ازای هر خودرو، رنگ بر اساس وضعیت و
+  // چرخش بر اساس bearing؛ marker انتخاب‌شده بزرگ‌تر و halo دارد.
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!map) return;
+
+    function sync() {
+      if (!map) return;
+      const seen = new Set<string>();
+      for (const vehicle of vehicles) {
+        seen.add(vehicle.missionId);
+        const selected = vehicle.missionId === selectedMissionId;
+        const existing = vehicleMarkersRef.current.get(vehicle.missionId);
+
+        if (existing) {
+          // به‌روزرسانی موقعیت/ظاهر marker موجود به‌جای حذف و بازساخت — یک DOM node پایدار برای
+          // هر مأموریت در سراسر چرخه‌های refresh دوره‌ای (هر ۵ ثانیه) حفظ می‌شود.
+          existing.setLngLat([vehicle.position.longitude, vehicle.position.latitude]);
+          applyVehicleMarkerVisual(existing.getElement() as HTMLDivElement, vehicle, selected);
+          continue;
+        }
+
+        const el = createVehicleMarkerElement(vehicle, selected);
+        el.addEventListener("click", (event) => {
+          event.stopPropagation();
+          onVehicleSelectRef.current?.(vehicle.missionId);
+        });
+
+        const marker = new Marker({ element: el, anchor: "center" })
+          .setLngLat([vehicle.position.longitude, vehicle.position.latitude])
+          .addTo(map);
+        vehicleMarkersRef.current.set(vehicle.missionId, marker);
+      }
+
+      for (const [missionId, marker] of vehicleMarkersRef.current) {
+        if (!seen.has(missionId)) {
+          marker.remove();
+          vehicleMarkersRef.current.delete(missionId);
+        }
+      }
+    }
+
+    if (map.loaded()) sync();
+    else map.once("load", sync);
+  }, [vehicles, selectedMissionId]);
+
+  // رسم مسیر/خط مستقیم و highlight مبدأ/مقصد فقط برای مأموریت انتخاب‌شده (UX_MAP_AND_DESIGN_SYSTEM.md §6)
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!map) return;
+
+    function sync() {
+      if (!map) return;
+      const source = map.getSource(ROUTE_LINE_SOURCE_ID) as GeoJSONSource | undefined;
+
+      originHighlightMarkerRef.current?.remove();
+      originHighlightMarkerRef.current = null;
+      destinationHighlightMarkerRef.current?.remove();
+      destinationHighlightMarkerRef.current = null;
+
+      if (!selectedRoutePreview) {
+        source?.setData(emptyLineString());
+        return;
+      }
+
+      source?.setData({
+        type: "Feature",
+        properties: {},
+        geometry: {
+          type: "LineString",
+          coordinates: selectedRoutePreview.points.map((p) => [p.longitude, p.latitude]),
+        },
+      });
+      if (map.getLayer(ROUTE_LINE_LAYER_ID)) {
+        map.setPaintProperty(ROUTE_LINE_LAYER_ID, "line-dasharray", selectedRoutePreview.isFallbackDirect ? [2, 2] : [1, 0]);
+      }
+
+      originHighlightMarkerRef.current = new Marker({ element: createFlagMarkerElement("#16a34a"), anchor: "bottom" })
+        .setLngLat([selectedRoutePreview.origin.longitude, selectedRoutePreview.origin.latitude])
+        .addTo(map);
+      destinationHighlightMarkerRef.current = new Marker({ element: createFlagMarkerElement("#ef4444"), anchor: "bottom" })
+        .setLngLat([selectedRoutePreview.destination.longitude, selectedRoutePreview.destination.latitude])
+        .addTo(map);
+    }
+
+    if (map.loaded()) sync();
+    else map.once("load", sync);
+  }, [selectedRoutePreview]);
 
   return <div ref={containerRef} className="h-full w-full" />;
 }
