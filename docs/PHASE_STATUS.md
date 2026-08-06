@@ -1,6 +1,6 @@
 # وضعیت فازهای پیاده‌سازی
 
-آخرین به‌روزرسانی: 2026-08-06 (Phase 8)
+آخرین به‌روزرسانی: 2026-08-06 (Phase 9)
 
 ## خلاصه وضعیت
 
@@ -17,7 +17,7 @@
 | 6 | تعریف مرسوله و مقصد | ثبت مرسوله و preview مبدأ/مقصد روی نقشه | DONE | S | — |
 | 7 | برنامه‌ریزی مأموریت از فرم | ساخت Draft، تخمین و انتشار مأموریت | DONE | M | ADR-018/019/021 |
 | 8 | تعریف مأموریت از داخل نقشه | ساخت و انتشار مأموریت بدون ترک نقشه | DONE | M | Demo 2 |
-| 9 | موتور موقعیت تقریبی | لایه محاسباتی pure (بدون UI) — Development Pack کامل در `docs/phase-09-simulation-engine/` | NOT_STARTED | M | بدون UI، طبق ADR-024 |
+| 9 | موتور موقعیت تقریبی | لایه محاسباتی pure (بدون UI) — Development Pack کامل در `docs/phase-09-simulation-engine/` | DONE | M | بدون UI، طبق ADR-024 |
 | 10 | نقشه عملیاتی پایه و حرکت خودروها | خودروهای مأموریت‌دار در موقعیت تقریبی روی نقشه | NOT_STARTED | L | Demo 3 |
 | 11 | جدول مأموریت، انتخاب متقابل و فیلترها | همگام‌سازی نقشه/جدول و فیلترهای عملیاتی | NOT_STARTED | M | — |
 | 12 | سیکر زمان زنده و تاریخی | بازسازی وضعیت ناوگان در زمان دلخواه | NOT_STARTED | M | — |
@@ -219,6 +219,23 @@ Offline/network verification: بدون سرویس خارجی اضافه؛ هما
 Known limitations: اگر برای مبدأ/مقصد انتخاب‌شده روی نقشه هیچ مرسوله‌ای از قبل ثبت نشده باشد، مأموریت از این مسیر قابل ساخت نیست (باید ابتدا مرسوله از `/shipments/new` ساخته شود) — طبق ADR-023 این محدودیت عمدی است چون مبدأ/مقصد مأموریت همیشه از مرسوله مشتق می‌شود، نه فیلد مستقل. tolerance تطبیق مقصد با نقطه Tap‌شده (۱۵۰۰ متر) و tolerance عدم تطابق مسیر (۱۰۰۰ متر، از فاز ۷) هر دو hardcode هستند، نه تنظیم قابل‌ویرایش Admin (Phase 14). ویرایش مأموریت از داخل نقشه پیاده نشده — پنل نقشه فقط حالت «ساخت» را پوشش می‌دهد؛ ویرایش مأموریت `DRAFT` موجود همچنان فقط از `/missions/[id]` (فاز ۷) ممکن است.
 Deferred items: ویرایش مأموریت از داخل نقشه، تنظیم قابل‌ویرایش toleranceهای تطبیق مقصد/مسیر (Phase 14)، ساخت مرسوله inline از داخل پنل نقشه (در صورت نبود مرسوله مطابق).
 Decisions added/changed: ADR-023 اضافه شد — مستندسازی این‌که انتخاب مبدأ/مقصد روی نقشه یک فیلتر جست‌وجوی مرسوله است (با تابع pure `shipmentMatchesDestinationPoint`)، نه فیلد مستقل مأموریت، تا با invariant «مبدأ/مقصد مأموریت = مبدأ/مقصد مرسوله» از فاز ۷ در تعارض نباشد. همچنین یک باگ واقعی در `maplibre-map-inner.tsx` کشف و رفع شد: click handler نقطه خالی نقشه داخل `map.on("load", ...)` ثبت می‌شد و در نتیجه کلیک زودهنگام کاربر (پیش از کامل‌شدن بارگذاری style) بی‌اثر می‌ماند؛ به بیرون از `"load"` منتقل شد (بدون نیاز به ADR جداگانه، جزئیات در کد مستند شد).
+
+### Phase 9 — موتور موقعیت تقریبی
+
+Status: DONE
+Started: 2026-08-06
+Completed: 2026-08-06
+Visible output URL: **ندارد.** طبق تصمیم صریح مالک محصول و ADR-024، این فاز هیچ UI ندارد و کاملاً مستقل از React/Next.js UI/کتابخانه نقشه است. «خروجی قابل مشاهده» طبق تعریف بازنگری‌شده در `docs/phase-09-simulation-engine/09-ACCEPTANCE.md`: مجموعه تست خودکار سبز و قطعی. Development Pack کامل پیش از پیاده‌سازی در `docs/phase-09-simulation-engine/` تهیه شده بود و این پیاده‌سازی دقیقاً همان مستندات را دنبال کرد.
+Demo account/data: کاربران Admin/Planner/Viewer از فازهای قبل؛ fixtureهای تست با همان الگوی `buildMissionFixtures` فازهای ۷/۸ ساخته شدند.
+Branch/PR/Commit: مستقیم روی `main`
+Migrations: **ندارد** (طبق `docs/phase-09-simulation-engine/07-DATABASE.md` — موتور شبیه‌سازی صرفاً داده‌های snapshot‌شده فاز ۷ را می‌خواند، هیچ فیلد/جدول جدیدی لازم نداشت).
+Key files: `src/lib/domain/mission-simulation.ts` (هسته pure — `calculateMissionGeometry`/`simulateMissionPosition`: binary search روی cumulative distance، interpolation خطی lat/lng، bearing، ETA/remaining، reuse کامل `deriveMissionDisplayStatus` فاز ۷ و `haversineDistanceMeters` فاز ۵ بدون بازنویسی)، `src/server/services/simulation-service.ts` (تنها فایل این فاز که Prisma را فراخوانی می‌کند — `getMissionSimulation`)، `src/lib/validation/simulation.ts` (schema پارامتر `viewTime`)، `src/app/api/v1/missions/[id]/simulate/route.ts` (تنها endpoint فقط-خواندنی جدید، برای سه نقش Admin/Planner/Viewer باز — هم‌تراز دسترسی خواندن `/map`، نه محدودیت سخت‌گیرانه‌تر جهش مأموریت).
+Tests executed: `npm run typecheck`، `npm run lint`، `npm run test` (۱۵۵ تست Vitest شامل ۴۰ تست جدید در `mission-simulation.test.ts`: سناریوهای مرزی U1–U23، وضعیت S1–S10، مرزی B1–B3، منفی N1–N2، حافظه M1، همزمانی C1 — دقیقاً مطابق `docs/phase-09-simulation-engine/08-TESTS.md`)، `npm run build` (۴۲ route — دقیقاً یک route جدید، `/api/v1/missions/[id]/simulate`)، `npx playwright test` (اجرای کامل ۴ viewport شامل ۳۶ تست جدید در `tests/e2e/mission-simulation.spec.ts`: مسیر مستقیم، مسیر واقعی چندنقطه‌ای، ۴۰۴/۴۲۲/۴۰۱، پیش‌فرض `viewTime`، دسترسی بیننده وضعیت، انجماد موقعیت پس از لغو — بدون رگرسیون در تست‌های فازهای قبل).
+Manual demo steps: طبق `docs/phase-09-simulation-engine/09-ACCEPTANCE.md` §3، این فاز به‌جای سناریوی UI، یک پیمایش اسکریپتی ترمینال دارد: مأموریتی با مسیر شناخته‌شده در چهار لحظه (پیش از شروع، میانه مسیر، لحظه ETA، پس از یک لغو شبیه‌سازی‌شده) شبیه‌سازی و JSON چهار نتیجه بازبینی شد — پیش از شروع (`WAITING`، پیشرفت صفر، موقعیت مبدأ)، میانه مسیر (`IN_PROGRESS`، پیشرفت بین صفر و یک، bearing معنادار)، لحظه ETA (`ARRIVED`، پیشرفت یک، موقعیت مقصد)، پس از لغو (`CANCELLED`، موقعیت منجمد در لحظه لغو) — همگی مطابق انتظار.
+Offline/network verification: بدون وابستگی جدید؛ کل فاز محاسبه سرور-داخلی روی داده از قبل در PostgreSQL محلی است، بدون هیچ فراخوانی شبکه‌ای جدید.
+Known limitations: طبق `docs/phase-09-simulation-engine/11-OUT_OF_SCOPE.md` — بدون رندر نقشه (فاز ۱۰)، بدون صفحه simulation-lab (به تصمیم فاز ۱۰ موکول شد)، بدون endpoint شبیه‌سازی دسته‌ای چند-مأموریتی (فاز ۱۰ طراحی می‌کند)، بدون caching (نیازی در مقیاس فعلی احساس نشد)، interpolation خطی lat/lng نه geodesic-exact (طبق ADR-P9-02 پذیرفتنی).
+Deferred items: رندر نقشه عملیاتی و marker متحرک (Phase 10)، تصمیم درباره صفحه simulation-lab (Phase 10)، سیکر زمان تاریخی (Phase 12)، endpoint شبیه‌سازی دسته‌ای (Phase 10، در صورت نیاز).
+Decisions added/changed: این فاز خودش یک Development Pack کامل (۱۶ سند، `docs/phase-09-simulation-engine/`) با ADR-P9-01 تا ADR-P9-09 دارد که پیش از این پیاده‌سازی نوشته شد؛ ADR-024 (سند اصلی `docs/DECISIONS.md`) نیز همان تصمیم حذف UI از این فاز را ثبت کرده است. هیچ تصمیم معماری جدیدی حین پیاده‌سازی لازم نشد — پیاده‌سازی دقیقاً طبق مستندات از پیش نوشته‌شده انجام شد، بدون انحراف.
 
 ## قاعده تغییر وضعیت به DONE
 
