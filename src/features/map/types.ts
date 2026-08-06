@@ -48,6 +48,7 @@ export interface MapSceneMission {
   routeId: string | null;
   cargoTypeNames: string[];
   shipmentCount: number;
+  shipmentTrackingCodes: string[];
 }
 
 export interface MapScene {

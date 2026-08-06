@@ -1,5 +1,12 @@
-import { expect, test, type Page } from "@playwright/test";
+import { expect, test, type Locator, type Page } from "@playwright/test";
 import { E2E_ADMIN_USERNAME, E2E_ADMIN_PASSWORD, E2E_VIEWER_USERNAME, E2E_VIEWER_PASSWORD } from "./global-setup";
+
+// جدول مأموریت‌های فاز ۱۱ همین متن را هم در panel دسکتاپ (همیشه mount، فقط با CSS پنهان زیر md) و
+// هم در Sheet موبایل تکرار می‌کند؛ .first() صرفاً اولین مورد در ترتیب DOM را می‌گیرد که می‌تواند
+// نسخه پنهان باشد — این کمکی به عنصر واقعاً قابل‌مشاهده محدود می‌کند.
+function visible(locator: Locator, page: Page): Locator {
+  return locator.and(page.locator(":visible"));
+}
 
 async function loginAs(page: Page, username: string, password: string) {
   await page.goto("/login");
@@ -227,9 +234,14 @@ test.describe("نقشه عملیاتی — Phase 10", () => {
     // already independently confirmed the target element is visible.
     await vehicleMarker.click({ force: true });
 
-    await expect(page.getByText(fixtures.vehicleIdentifier, { exact: true })).toBeVisible();
-    await expect(page.getByText("در انتظار حرکت", { exact: true })).toBeVisible();
-    await expect(page.getByText(`${fixtures.originWarehouseName} ← ${fixtures.destinationWarehouseName}`)).toBeVisible();
+    // Phase 11 added a mission table (docked panel + mobile sheet) that repeats this same mission's
+    // identifier/status/route text, so these lookups are no longer unique on the page — visible()
+    // narrows to the actually-rendered copy (the docked panel's copy stays mounted but CSS-hidden
+    // below md, so plain .first() can pick the wrong, hidden one); the detail panel's own content is
+    // more precisely covered by mission-interaction.spec.ts (Phase 11).
+    await expect(visible(page.getByText(fixtures.vehicleIdentifier, { exact: true }), page).first()).toBeVisible();
+    await expect(visible(page.getByText("در انتظار حرکت", { exact: true }), page).first()).toBeVisible();
+    await expect(visible(page.getByText(`${fixtures.originWarehouseName} ← ${fixtures.destinationWarehouseName}`), page).first()).toBeVisible();
     await expect(page.getByText("بدون مسیر تعریف‌شده", { exact: false })).toBeVisible();
 
     const missionResponse = await page.request.get(`/api/v1/missions/${missionId}`);

@@ -20,6 +20,9 @@ export type IconName =
   | "menu"
   | "chevron-down"
   | "chevron-left"
+  | "filter"
+  | "sort"
+  | "more-vertical"
   | "plus"
   | "pencil"
   | "trash"
@@ -140,6 +143,22 @@ const paths: Record<IconName, React.ReactNode> = {
   ),
   "chevron-down": <path d="m6 9 6 6 6-6" strokeLinecap="round" strokeLinejoin="round" />,
   "chevron-left": <path d="m15 6-6 6 6 6" strokeLinecap="round" strokeLinejoin="round" />,
+  filter: (
+    <path d="M4 5h16l-6 7.5V19l-4 2v-8.5Z" strokeLinecap="round" strokeLinejoin="round" />
+  ),
+  sort: (
+    <>
+      <path d="M7 5v14m0 0-3-3m3 3 3-3" strokeLinecap="round" strokeLinejoin="round" />
+      <path d="M17 19V5m0 0 3 3m-3-3-3 3" strokeLinecap="round" strokeLinejoin="round" />
+    </>
+  ),
+  "more-vertical": (
+    <>
+      <circle cx="12" cy="5.5" r="1.4" fill="currentColor" stroke="none" />
+      <circle cx="12" cy="12" r="1.4" fill="currentColor" stroke="none" />
+      <circle cx="12" cy="18.5" r="1.4" fill="currentColor" stroke="none" />
+    </>
+  ),
   plus: <path d="M12 5v14M5 12h14" strokeLinecap="round" />,
   pencil: (
     <path

@@ -26,6 +26,7 @@ export interface MapSceneMission {
   routeId: string | null;
   cargoTypeNames: string[];
   shipmentCount: number;
+  shipmentTrackingCodes: string[];
 }
 
 /**
@@ -73,6 +74,7 @@ export async function getMapScene(viewTime: Date): Promise<MapSceneMission[]> {
 
     const simulation = simulateMissionPosition(snapshot, viewTime);
     const cargoTypeNames = [...new Set(mission.shipments.map((link) => link.shipment.cargoType.name))];
+    const shipmentTrackingCodes = mission.shipments.map((link) => link.shipment.trackingCode);
 
     return {
       missionId: mission.id,
@@ -98,6 +100,7 @@ export async function getMapScene(viewTime: Date): Promise<MapSceneMission[]> {
       routeId: mission.routeId,
       cargoTypeNames,
       shipmentCount: mission.shipments.length,
+      shipmentTrackingCodes,
     };
   });
 }

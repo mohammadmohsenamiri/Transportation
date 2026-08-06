@@ -168,6 +168,10 @@ export interface MapLibreMapInnerProps {
   onVehicleSelect?: (missionId: string) => void;
   /** مسیر/خط مستقیم و مبدأ/مقصد مأموریت انتخاب‌شده برای highlight — فقط برای مأموریت انتخاب‌شده rendered می‌شود. */
   selectedRoutePreview?: SelectedRoutePreview | null;
+  /** دکمه «فیلتر بر اساس این به‌عنوان مبدأ» داخل popup مربوط به marker انبار (Phase 11، context menu مبدأ/مقصد). */
+  onFilterByOrigin?: (marker: OrgMapMarker) => void;
+  /** دکمه «فیلتر بر اساس این به‌عنوان مقصد» داخل popup هر marker سازمانی (Phase 11). */
+  onFilterByDestination?: (marker: OrgMapMarker) => void;
 }
 
 export function MapLibreMapInner({
@@ -183,6 +187,8 @@ export function MapLibreMapInner({
   selectedMissionId = null,
   onVehicleSelect,
   selectedRoutePreview = null,
+  onFilterByOrigin,
+  onFilterByDestination,
 }: MapLibreMapInnerProps) {
   const containerRef = useRef<HTMLDivElement | null>(null);
   const mapRef = useRef<MapLibreMap | null>(null);
@@ -197,6 +203,8 @@ export function MapLibreMapInner({
   const onMarkerSelectRef = useRef(onMarkerSelect);
   const onMapPickRef = useRef(onMapPick);
   const onVehicleSelectRef = useRef(onVehicleSelect);
+  const onFilterByOriginRef = useRef(onFilterByOrigin);
+  const onFilterByDestinationRef = useRef(onFilterByDestination);
   useEffect(() => {
     onTileErrorRef.current = onTileError;
   }, [onTileError]);
@@ -215,6 +223,12 @@ export function MapLibreMapInner({
   useEffect(() => {
     onVehicleSelectRef.current = onVehicleSelect;
   }, [onVehicleSelect]);
+  useEffect(() => {
+    onFilterByOriginRef.current = onFilterByOrigin;
+  }, [onFilterByOrigin]);
+  useEffect(() => {
+    onFilterByDestinationRef.current = onFilterByDestination;
+  }, [onFilterByDestination]);
 
   // ساخت اولیه نقشه — فقط یک‌بار در mount اجرا می‌شود؛ تغییر provider نیاز به remount کامل دارد
   useEffect(() => {
@@ -362,6 +376,7 @@ export function MapLibreMapInner({
         }
 
         const coordinates = feature.geometry.coordinates.slice() as [number, number];
+        const marker = markersRef.current.find((m) => m.id === props.id);
 
         const content = document.createElement("div");
         content.style.direction = "rtl";
@@ -373,6 +388,44 @@ export function MapLibreMapInner({
           <div style="color:#6b7280;">${escapeHtml(levelDisplayLabel[props.level])}</div>
           <div style="color:#9ca3af;font-size:11px;direction:ltr;text-align:right;margin-top:4px;">${escapeHtml(props.code)}</div>
         `;
+
+        // دکمه‌های «فیلتر بر اساس این به‌عنوان مبدأ/مقصد» (Phase 11) — با createElement/textContent
+        // ساخته می‌شوند نه innerHTML، تا event listener واقعی attach شود، نه رشته HTML.
+        if (marker && (onFilterByOriginRef.current || onFilterByDestinationRef.current)) {
+          const actions = document.createElement("div");
+          actions.style.marginTop = "8px";
+          actions.style.display = "flex";
+          actions.style.gap = "6px";
+          actions.style.flexWrap = "wrap";
+
+          function addActionButton(label: string, onClick: () => void) {
+            const button = document.createElement("button");
+            button.type = "button";
+            button.textContent = label;
+            Object.assign(button.style, {
+              fontSize: "11px",
+              padding: "4px 8px",
+              borderRadius: "8px",
+              border: "1px solid #d1d5db",
+              background: "transparent",
+              cursor: "pointer",
+              color: "#111827",
+            } satisfies Partial<CSSStyleDeclaration>);
+            button.addEventListener("click", () => {
+              onClick();
+              popupRef.current?.remove();
+            });
+            actions.appendChild(button);
+          }
+
+          if (props.level === "WAREHOUSE" && onFilterByOriginRef.current) {
+            addActionButton("فیلتر مبدأ از این نقطه", () => onFilterByOriginRef.current?.(marker));
+          }
+          if (onFilterByDestinationRef.current) {
+            addActionButton("فیلتر مقصد از این نقطه", () => onFilterByDestinationRef.current?.(marker));
+          }
+          content.appendChild(actions);
+        }
 
         popupRef.current?.remove();
         popupRef.current = new Popup({ closeOnClick: true, maxWidth: "240px" })
