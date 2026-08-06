@@ -20,8 +20,10 @@ test.describe("پیش‌نمایش قابل کلیک — Phase 0", () => {
     await expect(page.getByRole("button", { name: /توقف پخش/ })).toBeVisible();
   });
 
-  test("مسیر پیش‌فرض به فرانمای وضعیت هدایت می‌شود", async ({ page }) => {
+  test("مسیر پیش‌فرض بدون ورود به صفحه ورود سامانه اصلی هدایت می‌شود", async ({ page }) => {
+    // تا پیش از Phase 1 (ورود واقعی)، "/" به پیش‌نمایش ایستا هدایت می‌شد؛ از Phase 1 به بعد
+    // باید کاربر را به برنامه واقعی ببرد، نه پیش‌نمایش prototype که فقط از مسیر مستقیمش در دسترس است.
     await page.goto("/");
-    await expect(page).toHaveURL(/\/prototype\/overview$/);
+    await expect(page).toHaveURL(/\/login$/);
   });
 });

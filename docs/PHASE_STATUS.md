@@ -72,7 +72,7 @@ Decisions added/changed:
 Status: DONE
 Started: 2026-08-04
 Completed: 2026-08-04
-Visible output URL: `/prototype/overview`، `/prototype/map` (پس از `npm run dev`، آدرس محلی `http://localhost:3000`؛ `/` به‌صورت خودکار به `/prototype/overview` هدایت می‌شود)
+Visible output URL: `/prototype/overview`، `/prototype/map` (پس از `npm run dev`، آدرس محلی `http://localhost:3000`؛ `/` در این فاز به‌صورت خودکار به `/prototype/overview` هدایت می‌شد — از Phase 1 که ورود واقعی اضافه شد این ریدایرکت باید به `/dashboard` تغییر می‌کرد اما فراموش شده بود؛ در جریان کار روی Phase 8 اصلاح شد و اکنون `/` کاربر واردنشده را نهایتاً به `/login` می‌رساند)
 Demo account/data: بدون حساب کاربری؛ داده‌ها fixture ثابت در `src/demo/fixtures.ts` با برچسب «پیش‌نمایش رابط»
 Branch/PR/Commit: مستقیم روی `main`
 Migrations: ندارد (بدون DB در این فاز)
