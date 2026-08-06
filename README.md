@@ -22,6 +22,8 @@ Claude پیش از هر تغییر باید اسناد زیر را به‌ترت
 
 ماک‌آپ‌های مرجع طراحی: [`docs/mockups/`](./docs/mockups/README.md)
 
+Development Pack فاز ۹ (موتور موقعیت تقریبی، پیش از پیاده‌سازی تهیه شده): [`docs/phase-09-simulation-engine/`](./docs/phase-09-simulation-engine/00-README.md) — پیش از شروع فاز ۹ باید این پک به‌طور کامل خوانده شود؛ مرجع الزام‌آور دامنه، معماری، الگوریتم و پذیرش آن فاز است.
+
 ## پشته فنی مبنا
 
 - Next.js App Router و TypeScript با حالت strict
