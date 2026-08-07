@@ -23,9 +23,10 @@
 | 12 | سیکر زمان زنده و تاریخی | بازسازی وضعیت ناوگان در زمان دلخواه | DONE | M | ADR-028 |
 | 13 | فرانمای وضعیت مدیریتی | KPIهای واقعی و drill-down | DONE | S | Demo 4؛ ADR-029 |
 | 14 | مدیریت کاربران، آیکن‌ها و تنظیمات تکمیلی | کاربران، نقش‌ها، آیکن سفارشی و audit viewer | NOT_STARTED | M | — |
-| 15 | ریسپانسیو، Touch و دسترس‌پذیری نهایی | اجرای کامل جریان‌ها روی موبایل و تبلت | NOT_STARTED | L | — |
-| 16 | اجرای بدون اینترنت، امنیت، عملیات و ظرفیت | نسخه production قابل اجرا فقط در LAN | NOT_STARTED | L | — |
-| 17 | UAT و Release Candidate | نسخه قابل نصب، راهنما، گزارش UAT و rollback | NOT_STARTED | M | Release Candidate |
+| 15 | تکمیل چرخه عمر مأموریت | وضعیت پایانی واقعی، زمان واقعی و کنترل همروندی | NOT_STARTED | M | Development Pack در `docs/phase-15-mission-lifecycle-completion/` |
+| 16 | ریسپانسیو، Touch و دسترس‌پذیری نهایی | اجرای کامل جریان‌ها روی موبایل و تبلت | NOT_STARTED | L | — |
+| 17 | اجرای بدون اینترنت، امنیت، عملیات و ظرفیت | نسخه production قابل اجرا فقط در LAN | NOT_STARTED | L | — |
+| 18 | UAT و Release Candidate | نسخه قابل نصب، راهنما، گزارش UAT و rollback | NOT_STARTED | M | Release Candidate |
 
 ## نقاط تحویل
 
@@ -34,7 +35,7 @@
 - **Demo 2 — Phase 8:** مسیر، مرسوله و مأموریت از فرم و نقشه ساخته می‌شوند.
 - **Demo 3 — Phase 10:** حرکت تقریبی خودروهای واقعی مأموریت روی نقشه نمایش داده می‌شود.
 - **Demo 4 — Phase 13:** نقشه عملیاتی، timeline و داشبورد مدیریتی قابل ارائه‌اند.
-- **Release Candidate — Phase 17:** نسخه برای UAT و استقرار شبکه داخلی آماده است.
+- **Release Candidate — Phase 18:** نسخه برای UAT و استقرار شبکه داخلی آماده است.
 
 ## مقادیر مجاز وضعیت
 

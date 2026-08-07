@@ -1,6 +1,14 @@
-# Phase 14 — Mission Management — Pre-Implementation Dependency Review
+# Phase 15 — Mission Lifecycle Completion — Pre-Implementation Dependency Review
 
 **Status: Review artifact, produced before `00-README.md`.** This is the audit the commissioning brief requires ("identify missing interfaces, terminology inconsistencies, dependency gaps and architectural conflicts") before any numbered pack document is written. It is not itself a pack document.
+
+**Resolution adopted (post-review, by the product owner).** This review was commissioned as "Phase 14 — Mission Management". It found two blocking conflicts (§1, §2) and recommended a resolution (§8). The product owner accepted recommendation §8:
+
+- The phase is **retitled "Mission Lifecycle Completion"** — it extends the shipped Phase 7/8 mission module rather than introducing it.
+- Its scope is **the delta in §3–§5 only**; the Phase 7/8 surface is existing foundation to consume, never to rebuild.
+- It is **numbered Phase 15**, inserted ahead of the former Phases 15–17, which shift to 16–18. Rationale: this is core business capability and must land before the responsive/offline-hardening/UAT phases. The plan's original **Phase 14 (users, icons, settings) is left untouched**.
+
+Everything below is the original audit as written, and remains the binding technical basis for the pack.
 
 **Headline finding: this review is blocking.** Two conflicts are material enough that writing `00-README.md` before they are resolved would produce a pack that contradicts the repository. Both are described in §1 and §2, with a recommended resolution in §8. Everything from §3 onward is the substantive audit, which is valid regardless of how §1/§2 are resolved.
 
