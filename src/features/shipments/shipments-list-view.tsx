@@ -58,8 +58,14 @@ export function ShipmentsListView({ canManage }: { canManage: boolean }) {
         )}
       </div>
 
-      <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+      {/*
+        هر شش کارت با هم نمایش داده می‌شوند تا جمع تفکیک‌ها دقیقاً برابر «کل» باشد. پیش‌تر فقط سه
+        وضعیت عملیاتی کارت داشتند در حالی که «کل» همه را می‌شمرد، و کاربر نمی‌فهمید مابه‌التفاوت
+        (پیش‌نویس و لغوشده) کجا رفته است.
+      */}
+      <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 xl:grid-cols-6">
         <StatCard icon="package" tone="primary" label="کل مرسوله‌ها" value={(summary?.total ?? 0).toLocaleString("fa-IR")} />
+        <StatCard icon="pencil" tone="info" label="پیش‌نویس" value={(summary?.draft ?? 0).toLocaleString("fa-IR")} />
         <StatCard
           icon="clock"
           tone="warning"
@@ -68,6 +74,7 @@ export function ShipmentsListView({ canManage }: { canManage: boolean }) {
         />
         <StatCard icon="truck" tone="info" label="در مسیر" value={(summary?.inTransit ?? 0).toLocaleString("fa-IR")} />
         <StatCard icon="ready" tone="success" label="تحویل‌شده" value={(summary?.delivered ?? 0).toLocaleString("fa-IR")} />
+        <StatCard icon="alert" tone="danger" label="لغوشده" value={(summary?.cancelled ?? 0).toLocaleString("fa-IR")} />
       </div>
 
       <div className="flex flex-wrap items-center gap-3">

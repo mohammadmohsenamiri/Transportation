@@ -98,7 +98,7 @@ Minimum required coverage regardless of test framework choice:
 
 ## 7. Load Tests
 
-Not required as an automated, CI-gated suite for Phase 9 — the documented baseline scale (2,000 concurrent missions, `docs/ARCHITECTURE_AND_DATA_MODEL.md` §7) is a Phase 16 capacity-testing concern (`docs/IMPLEMENTATION_PLAN.md` Phase 16: "اجرای بدون اینترنت، امنیت، عملیات و ظرفیت"). Phase 9's own performance tests (§6) are sufficient to prove the *algorithm* is not the bottleneck; proving the *system* holds up under concurrent load end-to-end is explicitly Phase 16's job. This is intentional scope discipline, not a gap — see [11-OUT_OF_SCOPE.md](./11-OUT_OF_SCOPE.md).
+Not required as an automated, CI-gated suite for Phase 9 — the documented baseline scale (2,000 concurrent missions, `docs/ARCHITECTURE_AND_DATA_MODEL.md` §7) is a Phase 17 capacity-testing concern (`docs/IMPLEMENTATION_PLAN.md` Phase 17: "اجرای بدون اینترنت، امنیت، عملیات و ظرفیت"). Phase 9's own performance tests (§6) are sufficient to prove the *algorithm* is not the bottleneck; proving the *system* holds up under concurrent load end-to-end is explicitly Phase 17's job. This is intentional scope discipline, not a gap — see [11-OUT_OF_SCOPE.md](./11-OUT_OF_SCOPE.md).
 
 ## 8. Regression Tests
 

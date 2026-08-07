@@ -5,7 +5,7 @@
 | فایل | صفحه | فاز(های) مرتبط |
 |---|---|---|
 | [01-mission-creation-desktop.png](./01-mission-creation-desktop.png) | تعریف مأموریت (مرحله‌ای: مرسوله → مبدأ/مقصد → خودرو → زمان حرکت → مسیر → بازبینی)، پیش‌نمایش نقشه و برآورد مأموریت | Phase 7, Phase 8 |
-| [02-map-mobile.png](./02-map-mobile.png) | نمای نقشه موبایل: کارت‌های KPI، نقشه تمام‌صفحه، bottom sheet مأموریت‌ها، سیکر زمان | Phase 10, Phase 11, Phase 12, Phase 15 |
+| [02-map-mobile.png](./02-map-mobile.png) | نمای نقشه موبایل: کارت‌های KPI، نقشه تمام‌صفحه، bottom sheet مأموریت‌ها، سیکر زمان | Phase 10, Phase 11, Phase 12, Phase 16 |
 | [03-routes-management-desktop.png](./03-routes-management-desktop.png) | مدیریت مسیرها: import CSV، پیش‌نمایش نقاط، ابزار ترسیم روی نقشه، کتابخانه مسیرها | Phase 5 |
 | [04-settings-vehicles-desktop.png](./04-settings-vehicles-desktop.png) | تنظیمات سامانه، تب خودروها: فرم افزودن خودرو، آیکن‌های سفارشی، تنظیمات نقشه، نقش‌های کاربری | Phase 3, Phase 4, Phase 14 |
 | [05-status-dashboard-desktop.png](./05-status-dashboard-desktop.png) | فرانمای وضعیت: کارت‌های KPI، نمودارهای دونات، توزیع مقصد روی نقشه کوچک، آخرین مأموریت‌ها و فعالیت‌ها | Phase 13 |

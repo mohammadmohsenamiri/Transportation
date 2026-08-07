@@ -26,11 +26,14 @@ export interface Shipment {
   updatedAt: string;
 }
 
+/** هر پنج وضعیت شمرده می‌شود؛ جمع سطل‌ها همیشه برابر `total` است. */
 export interface ShipmentSummary {
   total: number;
+  draft: number;
   waitingForDispatch: number;
   inTransit: number;
   delivered: number;
+  cancelled: number;
 }
 
 export interface ShipmentHistoryEntry {

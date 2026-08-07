@@ -40,11 +40,13 @@ export interface Mission {
   updatedAt: string;
 }
 
+/** بر اساس وضعیت ثبت‌شده؛ جمع سطل‌ها همیشه برابر `total` است. */
 export interface MissionSummary {
   total: number;
   draft: number;
   scheduled: number;
   cancelled: number;
+  archived: number;
 }
 
 export interface MissionHistoryEntry {

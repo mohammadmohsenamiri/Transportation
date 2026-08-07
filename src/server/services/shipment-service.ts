@@ -170,21 +170,64 @@ export async function listShipments(filters: {
   return shipments.map(toDTO);
 }
 
+/**
+ * خلاصه مرسوله‌ها.
+ *
+ * هر پنج وضعیت شمرده می‌شوند، نه فقط سه‌تای عملیاتی: پیش‌تر `total` همه وضعیت‌ها را می‌شمرد ولی
+ * تفکیک فقط سه سطل داشت، پس اعداد صفحه با هم جمع نمی‌شدند (مثلاً «کل ۱۳۴۱» در برابر
+ * «۹۷۴ + ۰ + ۰») و کاربر نمی‌فهمید بقیه کجا رفته‌اند. اکنون `draft + waitingForDispatch +
+ * inTransit + delivered + cancelled === total` یک ثابت تضمین‌شده است.
+ */
 export interface ShipmentSummary {
   total: number;
+  draft: number;
   waitingForDispatch: number;
   inTransit: number;
   delivered: number;
+  cancelled: number;
 }
 
 export async function getShipmentSummary(): Promise<ShipmentSummary> {
-  const [total, waitingForDispatch, inTransit, delivered] = await Promise.all([
-    prisma.shipment.count({ where: { deletedAt: null } }),
-    prisma.shipment.count({ where: { deletedAt: null, status: "WAITING_FOR_DISPATCH" } }),
-    prisma.shipment.count({ where: { deletedAt: null, status: "IN_TRANSIT" } }),
-    prisma.shipment.count({ where: { deletedAt: null, status: "DELIVERED" } }),
-  ]);
-  return { total, waitingForDispatch, inTransit, delivered };
+  // یک groupBy به‌جای پنج count جداگانه — هم یک رفت‌وبرگشت کمتر، هم تضمین اینکه جمع سطل‌ها
+  // دقیقاً برابر total باشد چون همه از یک اسکن می‌آیند.
+  const groups = await prisma.shipment.groupBy({
+    by: ["status"],
+    where: { deletedAt: null },
+    _count: { _all: true },
+  });
+
+  const summary: ShipmentSummary = {
+    total: 0,
+    draft: 0,
+    waitingForDispatch: 0,
+    inTransit: 0,
+    delivered: 0,
+    cancelled: 0,
+  };
+
+  for (const group of groups) {
+    const count = group._count._all;
+    summary.total += count;
+    switch (group.status) {
+      case "DRAFT":
+        summary.draft += count;
+        break;
+      case "WAITING_FOR_DISPATCH":
+        summary.waitingForDispatch += count;
+        break;
+      case "IN_TRANSIT":
+        summary.inTransit += count;
+        break;
+      case "DELIVERED":
+        summary.delivered += count;
+        break;
+      case "CANCELLED":
+        summary.cancelled += count;
+        break;
+    }
+  }
+
+  return summary;
 }
 
 export async function getShipmentById(id: string): Promise<ShipmentDTO | null> {

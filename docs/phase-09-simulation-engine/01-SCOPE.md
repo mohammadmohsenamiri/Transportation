@@ -49,7 +49,7 @@ A non-goal is something Phase 9 is deliberately *not trying to achieve*, distinc
 | Non-goal | Explanation |
 |---|---|
 | Sub-meter positional accuracy | The product's own domain rule (`CLAUDE.md`) requires the UI to always label this as "approximate" — the engine is not meant to compete with real telematics precision. |
-| Real-time performance under sustained per-second polling for thousands of concurrent missions | Baseline scale target (`docs/ARCHITECTURE_AND_DATA_MODEL.md` §7: 2,000 concurrent missions) is the ceiling for this phase; anything beyond that is a Phase 16 capacity concern. |
+| Real-time performance under sustained per-second polling for thousands of concurrent missions | Baseline scale target (`docs/ARCHITECTURE_AND_DATA_MODEL.md` §7: 2,000 concurrent missions) is the ceiling for this phase; anything beyond that is a Phase 17 capacity concern. |
 | Support for non-Haversine geodesy (e.g., ellipsoidal / Vincenty) | Haversine (spherical Earth) is the standard already used everywhere else in this codebase (Phase 5); Phase 9 does not introduce a second distance model. |
 | Time-zone-aware calculation | All time inputs/outputs are UTC `Date`/ISO-8601 instants, exactly like every other server-side date in this codebase; Jalali conversion is a UI-boundary concern only (`src/lib/dates/jalali.ts`), never touched by the engine. |
 

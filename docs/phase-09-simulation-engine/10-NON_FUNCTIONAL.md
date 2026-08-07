@@ -37,7 +37,7 @@ Phase 9 adds **no new logging.** The pure engine must never call `console.log`/`
 
 | Aspect | Phase 9 position |
 |---|---|
-| Metrics (request counts, latency histograms) | Not built in this phase — no metrics infrastructure exists anywhere else in this codebase yet (deferred to Phase 16, `docs/IMPLEMENTATION_PLAN.md`). Phase 9 does not introduce a first instance of it either, to stay consistent. |
+| Metrics (request counts, latency histograms) | Not built in this phase — no metrics infrastructure exists anywhere else in this codebase yet (deferred to Phase 17, `docs/IMPLEMENTATION_PLAN.md`). Phase 9 does not introduce a first instance of it either, to stay consistent. |
 | Tracing | Not applicable — no distributed tracing infrastructure exists in this project. |
 | Error visibility | Via the existing `DomainError` → HTTP error-response pipeline, identical to every other endpoint. |
 
@@ -65,4 +65,4 @@ Restated as a first-class non-functional requirement (not just an implementation
 
 ## 10. Offline Compatibility
 
-Phase 9 introduces zero external dependencies, zero network calls, zero CDN assets, zero fonts, zero icons. It is pure server-side TypeScript computation over data already in the local PostgreSQL database. It trivially satisfies `CLAUDE.md` §2's "بدون وابستگی عملیاتی به اینترنت" requirement by construction — there is nothing in this phase that could depend on the internet even accidentally. No offline-specific test is required for this phase beyond the general repository-wide offline acceptance test already defined in `docs/API_SECURITY_OFFLINE_OPERATIONS.md` §8, which Phase 16 will run against the whole system.
+Phase 9 introduces zero external dependencies, zero network calls, zero CDN assets, zero fonts, zero icons. It is pure server-side TypeScript computation over data already in the local PostgreSQL database. It trivially satisfies `CLAUDE.md` §2's "بدون وابستگی عملیاتی به اینترنت" requirement by construction — there is nothing in this phase that could depend on the internet even accidentally. No offline-specific test is required for this phase beyond the general repository-wide offline acceptance test already defined in `docs/API_SECURITY_OFFLINE_OPERATIONS.md` §8, which Phase 17 will run against the whole system.

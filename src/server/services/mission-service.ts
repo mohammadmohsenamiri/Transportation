@@ -668,21 +668,53 @@ export async function listMissions(filters: {
   return missions.map(toDTO);
 }
 
+/**
+ * خلاصه مأموریت بر اساس وضعیت *ثبت‌شده* (نه وضعیت محاسباتی — آن کار فرانمای وضعیت فاز ۱۳ است).
+ *
+ * هر چهار وضعیت enum شمرده می‌شوند. پیش‌تر `ARCHIVED` شمرده نمی‌شد و اعداد فقط به این دلیل جمع
+ * می‌شدند که هیچ کدی آن مقدار را نمی‌نوشت — یک تعادل تصادفی، نه تضمین‌شده. با شمارش همه وضعیت‌ها
+ * در یک groupBy، ثابت `draft + scheduled + cancelled + archived === total` ساختاری می‌شود و
+ * افزودن وضعیت‌های پایانی در فاز ۱۵ نمی‌تواند بی‌صدا آن را بشکند.
+ */
 export interface MissionSummary {
   total: number;
   draft: number;
   scheduled: number;
   cancelled: number;
+  archived: number;
 }
 
 export async function getMissionSummary(): Promise<MissionSummary> {
-  const [total, draft, scheduled, cancelled] = await Promise.all([
-    prisma.mission.count({ where: { deletedAt: null } }),
-    prisma.mission.count({ where: { deletedAt: null, persistedStatus: "DRAFT" } }),
-    prisma.mission.count({ where: { deletedAt: null, persistedStatus: "SCHEDULED" } }),
-    prisma.mission.count({ where: { deletedAt: null, persistedStatus: "CANCELLED" } }),
-  ]);
-  return { total, draft, scheduled, cancelled };
+  // یک groupBy به‌جای چهار count موازی: یک رفت‌وبرگشت کمتر، و مهم‌تر اینکه همه سطل‌ها از یک
+  // اسکن می‌آیند پس جمعشان ذاتاً برابر total است.
+  const groups = await prisma.mission.groupBy({
+    by: ["persistedStatus"],
+    where: { deletedAt: null },
+    _count: { _all: true },
+  });
+
+  const summary: MissionSummary = { total: 0, draft: 0, scheduled: 0, cancelled: 0, archived: 0 };
+
+  for (const group of groups) {
+    const count = group._count._all;
+    summary.total += count;
+    switch (group.persistedStatus) {
+      case "DRAFT":
+        summary.draft += count;
+        break;
+      case "SCHEDULED":
+        summary.scheduled += count;
+        break;
+      case "CANCELLED":
+        summary.cancelled += count;
+        break;
+      case "ARCHIVED":
+        summary.archived += count;
+        break;
+    }
+  }
+
+  return summary;
 }
 
 export async function getMissionById(id: string): Promise<MissionDTO | null> {

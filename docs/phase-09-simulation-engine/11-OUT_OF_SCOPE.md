@@ -42,7 +42,7 @@ Every item here is **intentionally excluded** from Phase 9. For each: what it is
 
 **What:** Any persistent or shared cache for simulation results or route-point lookups.
 **Why excluded:** Not needed at current scale (see [04-ARCHITECTURE.md](./04-ARCHITECTURE.md) §10 performance analysis); ADR-017 already establishes that Redis is not required at project start and is added behind an interface only if/when throughput demands it.
-**Owned by:** Deferred, unowned until a capacity test (Phase 16) demonstrates a real need.
+**Owned by:** Deferred, unowned until a capacity test (Phase 17) demonstrates a real need.
 
 ## 8. Historical Position Seeker / Timeline Scrubber
 
@@ -66,6 +66,6 @@ Every item here is **intentionally excluded** from Phase 9. For each: what it is
 | Real GPS | None (not on roadmap) | Product scope |
 | Geodesic interpolation | Unowned / future refinement | Precision not currently required |
 | Live push transport | Phase 10 | UX decision |
-| Caching infrastructure | Unowned / Phase 16 if needed | Premature optimization |
+| Caching infrastructure | Unowned / Phase 17 if needed | Premature optimization |
 | Historical seeker | Phase 12 | Separate phase in plan |
 | Batch simulation endpoint | Phase 10 | Speculative without defined need |

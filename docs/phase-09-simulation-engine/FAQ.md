@@ -88,7 +88,7 @@ English — matching `mission-rules.test.ts`/`mission-estimate.test.ts`. Persian
 Use `toBeCloseTo`, not `toBe`, for any computed coordinate/ratio/distance — except where the algorithm defines an exact literal output (e.g. `progressRatio === 1` at arrival). See `08-TESTS.md` §0 and §11.
 
 **Q26. Do I need load/stress tests for thousands of concurrent missions?**
-No — that's explicitly Phase 16's job (capacity testing). Phase 9's performance tests (P1–P3) only need to prove the algorithm itself isn't the bottleneck at documented baseline scale. See `08-TESTS.md` §7.
+No — that's explicitly Phase 17's job (capacity testing). Phase 9's performance tests (P1–P3) only need to prove the algorithm itself isn't the bottleneck at documented baseline scale. See `08-TESTS.md` §7.
 
 **Q27. How many tests are required minimum?**
 53 (see `08-TESTS.md` §11's summary table: 35 in the main unit file + 9 integration + memory/concurrency split across both). This is a floor, not a ceiling — add more if you find a real edge case this pack missed, and note it in your final report.
