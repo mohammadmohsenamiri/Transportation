@@ -9,7 +9,10 @@ import { Icon } from "@/components/ui/icons";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { useMissions, useMissionSummary, useDeleteMission } from "@/features/missions/use-mission-queries";
 import { missionDisplayStatusLabel, missionDisplayStatusTone } from "@/features/missions/status-labels";
+import { useSearchParamSeed } from "@/lib/navigation/use-search-param-seed";
 import type { Mission, MissionPersistedStatusValue } from "@/features/missions/types";
+
+const PERSISTED_STATUS_VALUES: MissionPersistedStatusValue[] = ["DRAFT", "SCHEDULED", "CANCELLED", "ARCHIVED"];
 
 function formatKm(meters: number): string {
   return `${(meters / 1000).toLocaleString("fa-IR", { maximumFractionDigits: 1 })} کیلومتر`;
@@ -17,7 +20,11 @@ function formatKm(meters: number): string {
 
 export function MissionsListView({ canManage }: { canManage: boolean }) {
   const [query, setQuery] = useState("");
-  const [statusFilter, setStatusFilter] = useState<MissionPersistedStatusValue | "">("");
+  // مقدار اولیه از query string (drill-down فرانمای وضعیت، فاز ۱۳) — فقط در اولین رندر؛ پس از آن
+  // انتخاب کاربر حاکم است و URL دیگر خوانده یا نوشته نمی‌شود.
+  const [statusFilter, setStatusFilter] = useState<MissionPersistedStatusValue | "">(
+    useSearchParamSeed("persistedStatus", PERSISTED_STATUS_VALUES),
+  );
 
   const { data: summary } = useMissionSummary();
   const {

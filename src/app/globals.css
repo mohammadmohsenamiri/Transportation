@@ -149,6 +149,42 @@ p,
   unicode-bidi: isolate;
 }
 
+/*
+  فرانمای وضعیت (فاز ۱۳) — لایه ظاهری «اتاق فرمان».
+  فقط از tokenهای موجود ساخته شده؛ `--color-panel-glow` تا فاز ۱۲ هیچ مصرف‌کننده‌ای نداشت و
+  همان hook از پیش رزرو‌شده برای «glow محدود» در UX_MAP_AND_DESIGN_SYSTEM.md §۱ است.
+  اثر شیشه‌ای عمداً نامتقارن است: در تیره `--color-panel` خودش نیمه‌شفاف است و blur دیده می‌شود،
+  در روشن پنل مات می‌ماند و فقط hairline نورانی باقی می‌ماند تا کنتراست متن فارسی حفظ شود.
+*/
+.dashboard-widget {
+  position: relative;
+  overflow: hidden;
+}
+
+.dashboard-widget::before {
+  content: "";
+  position: absolute;
+  inset-block-start: 0;
+  inset-inline: 0;
+  block-size: 1px;
+  background: linear-gradient(to left, transparent, var(--color-panel-glow), transparent);
+  pointer-events: none;
+}
+
+:root[data-theme="dark"] .dashboard-widget {
+  background-image: radial-gradient(120% 100% at 100% 0%, var(--color-panel-glow), transparent 60%);
+}
+
+.dashboard-kpi {
+  transition: border-color 160ms ease, transform 160ms ease;
+}
+
+@media (hover: hover) {
+  .dashboard-kpi.group:hover {
+    transform: translateY(-1px);
+  }
+}
+
 .theme-icon-dark {
   display: none;
 }

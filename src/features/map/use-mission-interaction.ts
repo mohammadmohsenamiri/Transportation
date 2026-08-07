@@ -31,9 +31,13 @@ export interface SavedMissionView {
  * محدوده این hook صرفاً orchestration سمت کلاینت است — هیچ موقعیت/فاصله محاسبه نمی‌کند؛ ورودی‌اش
  * همان MapSceneMission[] فاز ۱۰ (GET /api/v1/map/scene) است.
  */
-export function useMissionInteraction(missions: MapSceneMission[]) {
+export function useMissionInteraction(missions: MapSceneMission[], initialFilter?: Partial<MissionFilterState>) {
   const [selectedMissionId, setSelectedMissionId] = useState<string | null>(null);
-  const [filter, setFilter] = useState<MissionFilterState>(EMPTY_MISSION_FILTER_STATE);
+  // `initialFilter` فقط در اولین رندر خوانده می‌شود (drill-down فرانمای وضعیت، فاز ۱۳)؛ پس از آن
+  // فیلتر کاملاً در اختیار کاربر است و هیچ منبع بیرونی آن را بازنویسی نمی‌کند.
+  const [filter, setFilter] = useState<MissionFilterState>(
+    initialFilter ? { ...EMPTY_MISSION_FILTER_STATE, ...initialFilter } : EMPTY_MISSION_FILTER_STATE,
+  );
   const [query, setQuery] = useState("");
   const [sortField, setSortField] = useState<MissionSortField>("startAt");
   const [sortDirection, setSortDirection] = useState<SortDirection>("asc");

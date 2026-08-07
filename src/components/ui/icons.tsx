@@ -27,6 +27,10 @@ export type IconName =
   | "pause"
   | "skip-back"
   | "skip-forward"
+  | "chart-donut"
+  | "chart-bar"
+  | "refresh"
+  | "layout"
   | "plus"
   | "pencil"
   | "trash"
@@ -172,6 +176,33 @@ const paths: Record<IconName, React.ReactNode> = {
   ),
   "skip-back": <path d="M13 6 7 12l6 6M18 6l-6 6 6 6" strokeLinecap="round" strokeLinejoin="round" />,
   "skip-forward": <path d="M11 6l6 6-6 6M6 6l6 6-6 6" strokeLinecap="round" strokeLinejoin="round" />,
+  "chart-donut": (
+    <>
+      <circle cx="12" cy="12" r="8.5" />
+      <circle cx="12" cy="12" r="3.5" />
+      <path d="M12 3.5v5M18.5 12h-5" strokeLinecap="round" />
+    </>
+  ),
+  "chart-bar": (
+    <>
+      <path d="M4 20h16" strokeLinecap="round" />
+      <rect x="6" y="12" width="3.5" height="5.5" rx="1" />
+      <rect x="12" y="7" width="3.5" height="10.5" rx="1" />
+      <rect x="17.5" y="14.5" width="3" height="3" rx="1" />
+    </>
+  ),
+  refresh: (
+    <>
+      <path d="M20 12a8 8 0 1 1-2.4-5.7" strokeLinecap="round" />
+      <path d="M20 4v4.5h-4.5" strokeLinecap="round" strokeLinejoin="round" />
+    </>
+  ),
+  layout: (
+    <>
+      <rect x="3.5" y="4" width="17" height="16" rx="2" />
+      <path d="M3.5 9.5h17M10 9.5V20" />
+    </>
+  ),
   plus: <path d="M12 5v14M5 12h14" strokeLinecap="round" />,
   pencil: (
     <path

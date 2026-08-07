@@ -19,6 +19,18 @@ import { OperationalMissionTable } from "@/features/map/operational-mission-tabl
 import { ActiveFilterChips, MissionFilterForm, isFilterPanelActive } from "@/features/map/mission-filter-panel";
 import { useTimelineEngine } from "@/features/map/use-timeline-engine";
 import { TimelineSeeker } from "@/features/map/timeline-seeker";
+import { useSearchParamSeed } from "@/lib/navigation/use-search-param-seed";
+import type { MissionDisplayStatusValue } from "@/features/missions/types";
+
+/** وضعیت‌های محاسباتی مجاز برای drill-down از فرانمای وضعیت (فاز ۱۳). */
+const DRILLDOWN_STATUSES: MissionDisplayStatusValue[] = [
+  "DRAFT",
+  "WAITING",
+  "IN_PROGRESS",
+  "ARRIVED",
+  "CANCELLED",
+  "ARCHIVED",
+];
 
 const MapLibreMapInner = dynamic(
   () => import("@/features/map/maplibre-map-inner").then((mod) => mod.MapLibreMapInner),
@@ -64,7 +76,9 @@ export function MapView({ canCreateMission = false }: MapViewProps) {
   const [tileDegraded, setTileDegraded] = useState(false);
 
   const allMissions = useMemo(() => sceneQuery.data?.missions ?? [], [sceneQuery.data]);
-  const interaction = useMissionInteraction(allMissions);
+  // ?missionStatus=... از فرانمای وضعیت می‌آید و فقط فیلتر اولیه را تعیین می‌کند (فاز ۱۳).
+  const drillDownStatus = useSearchParamSeed("missionStatus", DRILLDOWN_STATUSES);
+  const interaction = useMissionInteraction(allMissions, drillDownStatus ? { status: drillDownStatus } : undefined);
   const [desktopFilterOpen, setDesktopFilterOpen] = useState(false);
   const [mobileFilterOpen, setMobileFilterOpen] = useState(false);
   const [mobileTableOpen, setMobileTableOpen] = useState(false);

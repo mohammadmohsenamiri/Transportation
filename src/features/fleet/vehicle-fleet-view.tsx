@@ -23,6 +23,7 @@ import {
 } from "@/features/fleet/use-fleet-queries";
 import type { Vehicle } from "@/features/fleet/types";
 import { ApiError } from "@/lib/http/api-client-error";
+import { useSearchParamSeed } from "@/lib/navigation/use-search-param-seed";
 
 type SheetState = { mode: "closed" } | { mode: "create" } | { mode: "edit"; item: Vehicle };
 
@@ -31,10 +32,13 @@ const readinessLabel: Record<Vehicle["readiness"], string> = {
   OUT_OF_SERVICE: "خارج از سرویس",
 };
 
+const READINESS_VALUES: Vehicle["readiness"][] = ["READY", "OUT_OF_SERVICE"];
+
 export function VehicleFleetView() {
   const [query, setQuery] = useState("");
   const [typeFilter, setTypeFilter] = useState("");
-  const [readinessFilter, setReadinessFilter] = useState("");
+  // مقدار اولیه از query string (drill-down فرانمای وضعیت، فاز ۱۳).
+  const [readinessFilter, setReadinessFilter] = useState<string>(useSearchParamSeed("readiness", READINESS_VALUES));
 
   const { data: summary } = useFleetSummary();
   const vehicleTypes = useVehicleTypes();

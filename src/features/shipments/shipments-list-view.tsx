@@ -10,11 +10,13 @@ import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { useCargoTypes } from "@/features/fleet/use-fleet-queries";
 import { useShipments, useShipmentSummary, useDeleteShipment } from "@/features/shipments/use-shipment-queries";
 import { shipmentStatusLabel, shipmentStatusTone, shipmentStatusValues } from "@/features/shipments/status-labels";
+import { useSearchParamSeed } from "@/lib/navigation/use-search-param-seed";
 import type { Shipment } from "@/features/shipments/types";
 
 export function ShipmentsListView({ canManage }: { canManage: boolean }) {
   const [query, setQuery] = useState("");
-  const [statusFilter, setStatusFilter] = useState("");
+  // مقدار اولیه از query string (drill-down فرانمای وضعیت، فاز ۱۳).
+  const [statusFilter, setStatusFilter] = useState<string>(useSearchParamSeed("status", shipmentStatusValues));
   const [cargoTypeFilter, setCargoTypeFilter] = useState("");
 
   const { data: summary } = useShipmentSummary();
