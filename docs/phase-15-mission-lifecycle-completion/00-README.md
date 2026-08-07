@@ -2,7 +2,9 @@
 
 Status of this document: **Planning artifact.** This directory is a Development Pack produced before any Phase 15 code is written. It is binding for whoever implements Phase 15, the same way `docs/IMPLEMENTATION_PLAN.md` is binding for every other phase. Nothing in this pack has been implemented yet.
 
-**Process note:** this pack is produced one document at a time, with explicit product-owner approval required between documents. This file (`00-README.md`) is the first numbered document; it is preceded only by `PRE_IMPLEMENTATION_DEPENDENCY_REVIEW.md`, which is the audit this document's decisions rest on. Do not start `01-SCOPE.md` until the product owner approves this one.
+**Process note:** this pack was opened one document at a time; on the product owner's instruction the remaining documents were then produced in a single pass. **The pack is complete** — `00-README.md` … `13-PROMPT.md`, `ADR.md`, `FAQ.md`, preceded by `PRE_IMPLEMENTATION_DEPENDENCY_REVIEW.md`, which is the audit this document's decisions rest on.
+
+All six open architectural questions listed in §7 below have since been **resolved** and are recorded as ADR-P15-01 … ADR-P15-10 in `ADR.md`. §7 is retained as the record of what was open at this stage; `ADR.md` is authoritative for the answers.
 
 **Reading order for the implementation engineer:** `PRE_IMPLEMENTATION_DEPENDENCY_REVIEW.md` first (it explains why this phase exists and what already ships), then this file, then `01-SCOPE.md` … `13-PROMPT.md` in numeric order, then `ADR.md`, then `FAQ.md`.
 
@@ -214,6 +216,8 @@ The most sensitive consumer. ADR-029 §1 binds the dashboard to the same status 
 ⚠️ **"Assignment" is overloaded.** The brief uses it for *vehicle* assignment; the codebase uses `MissionShipment.isActiveAssignment` for *shipment* assignment. Both meanings must be qualified wherever used.
 
 ## 7. Open architectural questions for later documents
+
+> **All resolved.** See `ADR.md` for the binding answers: (1) → ADR-P15-01, (2) → ADR-P15-02, (3) → ADR-P15-03, (4) → ADR-P15-04, (5) → ADR-P15-05, (6) → ADR-P15-06. Retained below as the record of what was open when this document was written.
 
 Deliberately unresolved here — each becomes a full `ADR-P15-xx` entry once `04-ARCHITECTURE.md` has laid out the options:
 
