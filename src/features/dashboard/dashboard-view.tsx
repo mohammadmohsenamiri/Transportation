@@ -5,6 +5,7 @@ import Link from "next/link";
 import { Icon } from "@/components/ui/icons";
 import { Panel } from "@/components/ui/panel";
 import { Sheet } from "@/components/ui/sheet";
+import { StatusBadge } from "@/components/ui/badge";
 import { utcIsoToJalali } from "@/lib/dates/jalali";
 import { DEFAULT_DASHBOARD_RANGE, type DashboardRangePreset } from "@/lib/domain/dashboard-rules";
 import { useDashboardSummary } from "@/features/dashboard/use-dashboard-queries";
@@ -39,7 +40,20 @@ function formatJalaliDateTime(iso: string): string {
   return `${jalali.year}/${pad(jalali.month)}/${pad(jalali.day)} — ${pad(jalali.hour)}:${pad(jalali.minute)}:${pad(seconds)}`;
 }
 
-export function DashboardView({ permissions }: { permissions: DashboardPermissions }) {
+export interface DashboardViewProps {
+  permissions: DashboardPermissions;
+  username: string;
+  /**
+   * برچسب فارسی نقش‌ها، *از پیش ترجمه‌شده* در server component.
+   *
+   * عمداً `RoleCode` خام گرفته نمی‌شود: `@/lib/permissions/roles` مقدار enum را از
+   * `@/generated/prisma/client` می‌گیرد، و import آن در یک کامپوننت `"use client"` کل Prisma
+   * client (که به `node:module` نیاز دارد) را وارد bundle مرورگر می‌کند و build را می‌شکند.
+   */
+  roleLabels: string[];
+}
+
+export function DashboardView({ permissions, username, roleLabels }: DashboardViewProps) {
   const [range, setRange] = useState<DashboardRangePreset>(DEFAULT_DASHBOARD_RANGE);
   const [autoRefresh, setAutoRefresh] = useState(true);
   const [settingsOpen, setSettingsOpen] = useState(false);
@@ -51,6 +65,8 @@ export function DashboardView({ permissions }: { permissions: DashboardPermissio
   return (
     <div className="flex flex-col gap-4 sm:gap-5">
       <DashboardHeader
+        username={username}
+        roleLabels={roleLabels}
         range={range}
         onRangeChange={setRange}
         autoRefresh={autoRefresh}
@@ -97,6 +113,8 @@ export function DashboardView({ permissions }: { permissions: DashboardPermissio
 // ---------------------------------------------------------------------------
 
 interface DashboardHeaderProps {
+  username: string;
+  roleLabels: string[];
   range: DashboardRangePreset;
   onRangeChange: (range: DashboardRangePreset) => void;
   autoRefresh: boolean;
@@ -109,6 +127,8 @@ interface DashboardHeaderProps {
 }
 
 function DashboardHeader({
+  username,
+  roleLabels,
   range,
   onRangeChange,
   autoRefresh,
@@ -124,7 +144,20 @@ function DashboardHeader({
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div className="min-w-0">
           <h1 className="text-lg font-bold text-[var(--color-text)] sm:text-xl">فرانمای وضعیت</h1>
-          <p className="mt-1 flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-[var(--color-text-muted)]">
+
+          {/*
+            خوشامد و نقش‌های کاربر از صفحه فاز ۱ حفظ شده‌اند: فرانمای فاز ۱۳ جای آن صفحه را گرفت،
+            ولی «کاربر بداند با چه حسابی و چه نقش‌هایی وارد شده» یک قرارداد شیپ‌شده است (و در
+            tests/e2e/auth.spec.ts هم assert می‌شود)، نه جزئیات موقتی placeholder.
+          */}
+          <h2 className="mt-1 text-sm font-semibold text-[var(--color-text)]">خوش آمدید، {username}</h2>
+          <div className="mt-1.5 flex flex-wrap items-center gap-1.5">
+            {roleLabels.map((label) => (
+              <StatusBadge key={label} tone="primary" label={label} />
+            ))}
+          </div>
+
+          <p className="mt-2 flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-[var(--color-text-muted)]">
             <span>آخرین به‌روزرسانی:</span>
             {computedAt ? (
               <span className="ltr-inline tabular-nums font-medium text-[var(--color-text)]" dir="ltr">

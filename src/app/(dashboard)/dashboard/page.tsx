@@ -1,6 +1,6 @@
 import { redirect } from "next/navigation";
 import { getCurrentUser } from "@/lib/auth/current-user";
-import { RoleCode } from "@/lib/permissions/roles";
+import { RoleCode, roleLabel } from "@/lib/permissions/roles";
 import { DashboardView, type DashboardPermissions } from "@/features/dashboard/dashboard-view";
 
 export default async function DashboardPage() {
@@ -25,5 +25,11 @@ export default async function DashboardPage() {
     organization: isAdmin,
   };
 
-  return <DashboardView permissions={permissions} />;
+  // برچسب نقش‌ها همین‌جا (server component) ترجمه می‌شود؛ `roles.ts` مقدار enum را از Prisma client
+  // می‌گیرد و وارد کردنش در کامپوننت client، Prisma را به bundle مرورگر می‌کشد و build را می‌شکند.
+  const roleLabels = user.roles.map((role) => roleLabel[role]);
+
+  return (
+    <DashboardView permissions={permissions} username={user.username} roleLabels={roleLabels} />
+  );
 }
