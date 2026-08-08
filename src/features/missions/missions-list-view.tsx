@@ -64,10 +64,17 @@ export function MissionsListView({ canManage }: { canManage: boolean }) {
         )}
       </div>
 
-      <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+      {/*
+        هر شش سطل وضعیت ثبت‌شده نمایش داده می‌شوند تا جمعشان برابر «کل» بماند. نمایش زیرمجموعه‌ای
+        از آن‌ها دقیقاً همان نقصی بود که ممیزی فاز ۱۳ در شمارنده مرسوله‌ها پیدا کرد: کاربر تفاوت
+        «کل» و مجموع کارت‌ها را می‌دید و هیچ راهی برای فهمیدن مابه‌التفاوت نداشت.
+      */}
+      <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6">
         <StatCard icon="missions" tone="primary" label="کل مأموریت‌ها" value={(summary?.total ?? 0).toLocaleString("fa-IR")} />
         <StatCard icon="clock" tone="info" label="پیش‌نویس" value={(summary?.draft ?? 0).toLocaleString("fa-IR")} />
         <StatCard icon="ready" tone="success" label="برنامه‌ریزی‌شده" value={(summary?.scheduled ?? 0).toLocaleString("fa-IR")} />
+        <StatCard icon="ready" tone="success" label="تکمیل‌شده" value={(summary?.completed ?? 0).toLocaleString("fa-IR")} />
+        <StatCard icon="alert" tone="danger" label="ناموفق" value={(summary?.failed ?? 0).toLocaleString("fa-IR")} />
         <StatCard icon="alert" tone="danger" label="لغوشده" value={(summary?.cancelled ?? 0).toLocaleString("fa-IR")} />
       </div>
 
