@@ -10,6 +10,7 @@ import { isRateLimited, recordFailedAttempt, clearAttempts } from "@/lib/securit
 import { logAudit } from "@/server/services/audit-service";
 import { DomainError } from "@/lib/errors/domain-error";
 import { RoleCode } from "@/lib/permissions/roles";
+import { canUserLogIn, deriveUserStatus } from "@/lib/domain/user-rules";
 
 interface RequestContext {
   ipAddress: string | null;
@@ -63,16 +64,20 @@ export async function login(
     throw invalidCredentialsError;
   }
 
-  if (!user.isActive) {
+  // Phase 14: علاوه بر isActive، حالت‌های «تعلیق» و «حذف نرم» هم باید ورود را ببندند.
+  // بدون این بررسی، کاربر تعلیق‌شده همچنان می‌توانست وارد شود.
+  if (!canUserLogIn(user)) {
+    const status = deriveUserStatus(user);
     await logAudit({
       actorUserId: user.id,
       action: "auth.login.failure",
       entityType: "User",
       entityId: user.id,
-      metadataJson: { reason: "account_disabled" },
+      metadataJson: { reason: `account_${status.toLowerCase()}` },
       ipAddress: input.ipAddress,
       userAgent: input.userAgent,
     });
+    // پیام برای هر سه حالت یکسان است تا وضعیت دقیق حساب برای مهاجم افشا نشود.
     throw new DomainError("ACCOUNT_DISABLED", "حساب کاربری غیرفعال شده است.");
   }
 
@@ -107,6 +112,10 @@ export async function login(
       ipAddress: input.ipAddress,
     },
   });
+
+  // Phase 14 — آخرین ورود موفق. عمداً `version` را جابه‌جا نمی‌کند: این یک واقعیت سیستمی است،
+  // نه ویرایش مدیریتی، و نباید ویرایش هم‌زمانِ در جریانِ یک مدیر را با تعارض نسخه بشکند.
+  await prisma.user.update({ where: { id: user.id }, data: { lastLoginAt: new Date() } });
 
   await logAudit({
     actorUserId: user.id,
@@ -168,7 +177,8 @@ export async function getSessionUser(cookieValue: string | undefined): Promise<S
   if (!session) return null;
   if (session.revokedAt) return null;
   if (session.expiresAt.getTime() < Date.now()) return null;
-  if (!session.user.isActive) return null;
+  // Phase 14: session کاربر تعلیق‌شده یا حذف‌شده هم باید بی‌اعتبار باشد، نه فقط غیرفعال.
+  if (!canUserLogIn(session.user)) return null;
   if (!secretMatchesHash(parsed.secret, session.secretHash)) return null;
 
   return {

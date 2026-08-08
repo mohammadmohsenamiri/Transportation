@@ -22,7 +22,7 @@ export default async function SystemLayout({ children }: { children: React.React
   }
 
   return (
-    <div className="flex flex-col gap-4 sm:gap-6">
+    <div className="flex min-w-0 flex-col gap-4 sm:gap-6">
       <div>
         <h1 className="text-lg font-bold text-[var(--color-text)] sm:text-xl">تنظیمات سامانه</h1>
         <p className="mt-1 text-sm text-[var(--color-text-muted)]">مدیریت داده‌های مرجع و پیکربندی سامانه</p>

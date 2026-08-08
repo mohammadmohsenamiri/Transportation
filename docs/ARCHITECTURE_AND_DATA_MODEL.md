@@ -39,6 +39,19 @@ UserOrganizationScope (nullable/future-ready)
 
 Role codeها: `MISSION_PLANNER`, `STATUS_VIEWER`, `ADMIN`.
 
+مجوزدهی **فقط نقش‌محور** است: یک تابع `assertRole(actor, allowedRoles)` روی همین سه مقدار. هیچ جدول
+`Permission`، claim یا policy engine وجود ندارد و فاز ۱۴ عمداً هیچ‌کدام را اضافه نکرد (ADR-030 §۱).
+
+ستون‌های وضعیت که فاز ۱۴ به `User` افزود (همه افزایشی و بدون backfill):
+
+```text
+displayName, deletedAt, lastLoginAt, suspendedAt, suspensionReason, version
+```
+
+وضعیت نمایشی کاربر مثل وضعیت مأموریت **مشتق** است، نه ستون: `deriveUserStatus` با تقدم
+`DELETED > SUSPENDED > INACTIVE > ACTIVE` آن را از همین ستون‌ها می‌سازد. `version` توکن همروندی
+خوش‌بینانه است و هیچ معنای کسب‌وکاری ندارد.
+
 ### OrganizationUnit
 
 ```text
@@ -213,9 +226,31 @@ mimeType = image/svg+xml | image/png
 storagePath
 width/height nullable
 sha256
-isActive
+fileSize, originalFilename
+isActive, deletedAt, version
 uploadedBy/audit
 ```
+
+تخصیص با یک ستون nullable `iconAssetId` روی `OrganizationUnit`، `VehicleType` و `Vehicle` انجام
+می‌شود (`onDelete: SetNull`) — نه با جدول واسط، چون هر موجودیت حداکثر یک آیکن دارد. تعیین آیکن یک
+تابع محض است: موجودیت ← نوع موجودیت ← نشانگر پیش‌فرض داخلی، و آیکن حذف‌شده/غیرفعال بی‌صدا نادیده
+گرفته می‌شود.
+
+**بایت‌های فایل بیرون از `public/` ذخیره می‌شوند** (`ICON_STORAGE_ROOT`، پیش‌فرض `storage/icons`) و
+فقط از راه `GET /api/v1/icons/{id}/content` سرو می‌شوند؛ `public/` پیش از middleware و بدون احراز
+هویت سرو می‌شود. نام فایل همیشه `{uuid}.{png|svg}` است و نام اصلی فقط برای نمایش نگه داشته می‌شود.
+
+### SystemSetting
+
+```text
+key (PK), value (Json), version, updatedAt, updatedById
+```
+
+عمداً بدون ستون نوع: نوع، بازه، مقدار پیش‌فرض، برچسب فارسی و اتصال به متغیر محیطی همه در رجیستری
+کد (`src/lib/settings/settings-registry.ts`) هستند، پس افزودن یک تنظیم هیچ migration نمی‌خواهد.
+رکورد **تنبل** ساخته می‌شود، بنابراین این جدول دقیقاً «انحراف‌های اپراتور از پیش‌فرض» را نگه می‌دارد.
+ترتیب اولویت: متغیر محیطی ← رکورد DB ← پیش‌فرض رجیستری. هیچ کلید secret اینجا ذخیره نمی‌شود؛
+اعتبارنامه‌ها الگوی `MapProvider.secretReference` را دنبال می‌کنند.
 
 ### AuditLog
 
@@ -235,9 +270,15 @@ MissionPersistedStatus: DRAFT, SCHEDULED, CANCELLED, ARCHIVED
 RouteSource: CSV, MAP_DRAWING
 MapProviderKind: INTERNAL_TMS, INTERNAL_XYZ, INTERNAL_WMTS, EXTERNAL_XYZ
 MapStyleRenderStatus: PENDING, RENDERING, SUCCEEDED, FAILED  -- پیشنهادی، طبق ADR-022 (هنوز پیاده‌سازی نشده)
+IconCategory: VEHICLE, OFFICE, WAREHOUSE, DESTINATION, OTHER
 ```
 
 وضعیت `WAITING/IN_PROGRESS/ARRIVED` برای مأموریت در view time مشتق می‌شود و enum persisted نیست.
+به همین ترتیب `ACTIVE/INACTIVE/SUSPENDED/DELETED` برای کاربر هم مشتق است، نه enum persisted.
+
+`IconCategory` صرفاً برای دسته‌بندی و پالایش کتابخانه است و **قاعده تعیین آیکن را محدود نمی‌کند**:
+مدیر می‌تواند آیکنی از هر دسته را به هر موجودیتی بدهد و ناسازگاری دسته حداکثر یک هشدار است، نه یک
+گیت — چون دسته‌بندی یک کمک سازمان‌دهی است و نباید انتخاب اپراتور را مسدود کند.
 
 ## 5. الگوریتم فاصله و موقعیت
 

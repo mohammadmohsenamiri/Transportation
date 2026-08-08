@@ -35,3 +35,30 @@ export function recordFailedAttempt(key: string): void {
 export function clearAttempts(key: string): void {
   attempts.delete(key);
 }
+
+const quotas = new Map<string, AttemptRecord>();
+
+/**
+ * Phase 14 — سهمیه نوشتن برای عملیات مدیریتی (SEC-16).
+ *
+ * جدا از شمارنده ورود نگه داشته می‌شود چون معنایش فرق دارد: آنجا «تلاش ناموفق» شمرده می‌شود،
+ * اینجا *هر* نوشتن. یک بار فراخوانی، یک واحد مصرف می‌کند و `false` یعنی سهمیه تمام شده است.
+ * مثل شمارنده ورود، per-process است و برای استقرار چندنمونه‌ای باید به store مشترک منتقل شود.
+ */
+export function consumeQuota(key: string, max: number, windowMs: number): boolean {
+  const now = Date.now();
+  const record = quotas.get(key);
+
+  if (!record || now - record.windowStartedAt > windowMs) {
+    quotas.set(key, { count: 1, windowStartedAt: now });
+    return true;
+  }
+
+  if (record.count >= max) return false;
+  record.count += 1;
+  return true;
+}
+
+export function clearQuota(key: string): void {
+  quotas.delete(key);
+}

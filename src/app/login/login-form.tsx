@@ -11,7 +11,12 @@ export function LoginForm() {
   return (
     <form action={formAction} noValidate className="flex flex-col gap-4">
       {state.error && (
-        <div className="rounded-xl bg-[var(--color-danger-bg)] px-3 py-2 text-sm text-[var(--color-danger)]">
+        // role="alert" لازم است تا رد شدن ورود برای کاربر screen reader هم اعلام شود؛ بدون آن
+        // تنها بازخورد شکست، یک تغییر بصری بی‌صداست.
+        <div
+          role="alert"
+          className="rounded-xl bg-[var(--color-danger-bg)] px-3 py-2 text-sm text-[var(--color-danger)]"
+        >
           {state.error}
         </div>
       )}

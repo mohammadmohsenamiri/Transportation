@@ -49,6 +49,8 @@ export interface MapSceneMission {
   cargoTypeNames: string[];
   shipmentCount: number;
   shipmentTrackingCodes: string[];
+  /** Phase 14 — آیکن تعیین‌شده خودرو؛ `null` یعنی نشانگر دایره‌ای پیش‌فرض. */
+  iconUrl: string | null;
 }
 
 export interface MapScene {

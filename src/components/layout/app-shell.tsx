@@ -31,7 +31,12 @@ export function AppShell({
       <DesktopSidebar items={navItems} />
       <MobileSidebarDrawer items={navItems} open={drawerOpen} onClose={() => setDrawerOpen(false)} />
 
-      <div className="flex min-h-screen flex-1 flex-col">
+      {/*
+        `min-w-0` روی ستون محتوا: بدون آن، `min-width: auto` پیش‌فرض flex اجازه می‌دهد هر محتوای
+        عریضی (جدول، نوار تب) ستون را پهن‌تر از فضای موجود کند و کل صفحه اسکرول افقی بگیرد،
+        به‌جای اینکه اسکرول درون ظرف `overflow-x-auto` خودش بماند.
+      */}
+      <div className="flex min-h-screen min-w-0 flex-1 flex-col">
         {showPreviewBanner && <PreviewBanner />}
         <Header
           onMenuClick={() => setDrawerOpen(true)}

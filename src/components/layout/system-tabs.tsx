@@ -17,16 +17,19 @@ const tabs: SystemTab[] = [
   { id: "vehicle-types", label: "انواع خودرو", href: "/system/vehicle-types", enabled: true },
   { id: "cargo-types", label: "انواع بار", href: "/system/cargo-types", enabled: true },
   { id: "map-providers", label: "Provider نقشه", href: "/system/map-providers", enabled: true },
-  { id: "icons", label: "آیکن‌ها", href: "#", enabled: false },
-  { id: "users", label: "کاربران", href: "#", enabled: false },
-  { id: "audit", label: "گزارش تغییرات", href: "#", enabled: false },
+  { id: "icons", label: "آیکن‌ها", href: "/system/icons", enabled: true },
+  { id: "users", label: "کاربران", href: "/system/users", enabled: true },
+  { id: "settings", label: "تنظیمات", href: "/system/settings", enabled: true },
+  { id: "audit", label: "گزارش تغییرات", href: "/system/audit", enabled: true },
 ];
 
 export function SystemTabs() {
   const pathname = usePathname();
 
   return (
-    <div className="flex gap-1 overflow-x-auto border-b border-[var(--color-panel-border)]">
+    // بدون `min-w-0`، مقدار پیش‌فرض `min-width: auto` روی آیتم flex باعث می‌شود نوار تب‌ها به‌جای
+    // اسکرول درون خودش، کل صفحه را پهن کند — با افزوده‌شدن تب پنجم در فاز ۱۴ این دقیقاً رخ می‌داد.
+    <div className="flex min-w-0 gap-1 overflow-x-auto border-b border-[var(--color-panel-border)]">
       {tabs.map((tab) => {
         if (!tab.enabled) {
           return (

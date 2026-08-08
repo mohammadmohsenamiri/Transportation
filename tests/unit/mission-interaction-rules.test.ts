@@ -40,6 +40,7 @@ function mission(overrides: Partial<MapSceneMission> = {}): MapSceneMission {
     cargoTypeNames: ["الکترونیک"],
     shipmentCount: 1,
     shipmentTrackingCodes: ["TRK-1001"],
+    iconUrl: null,
     ...overrides,
   };
 }

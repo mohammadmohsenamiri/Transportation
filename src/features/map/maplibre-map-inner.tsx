@@ -107,6 +107,18 @@ function applyVehicleMarkerVisual(el: HTMLDivElement, vehicle: MapSceneMission, 
   el.style.cursor = "pointer";
   el.style.filter = selected ? "drop-shadow(0 0 5px rgba(47,111,237,0.85))" : "";
 
+  // Phase 14 — آیکن سفارشی جای دایره را می‌گیرد؛ نبودِ آیکن یا خطای بارگذاری بی‌صدا به دایره
+  // برمی‌گردد و هرگز تصویر شکسته نشان داده نمی‌شود (AC-22).
+  if (vehicle.iconUrl && !el.dataset.iconFailed) {
+    applyVehicleMarkerIcon(el, vehicle.iconUrl, size, color);
+    return;
+  }
+
+  el.querySelector('[data-role="vehicle-marker-icon"]')?.remove();
+  el.style.borderRadius = "";
+  el.style.boxShadow = "";
+  el.style.background = "";
+
   let svg = el.querySelector("svg");
   if (!svg) {
     svg = buildVehicleMarkerSvg(size);
@@ -116,6 +128,39 @@ function applyVehicleMarkerVisual(el: HTMLDivElement, vehicle: MapSceneMission, 
   svg.setAttribute("height", String(size));
   svg.style.transform = `rotate(${rotation}deg)`;
   svg.querySelector('[data-role="vehicle-marker-circle"]')?.setAttribute("fill", color);
+}
+
+/**
+ * آیکن سفارشی عمداً با bearing نمی‌چرخد: جهت ذاتی یک تصویر آپلودی معلوم نیست و چرخاندن آن،
+ * خودروها را وارونه نشان می‌دهد. وضعیت مأموریت به‌جای رنگ دایره، در حلقه دور آیکن دیده می‌شود.
+ */
+function applyVehicleMarkerIcon(el: HTMLDivElement, iconUrl: string, size: number, color: string): void {
+  el.querySelector("svg")?.remove();
+  el.style.borderRadius = "9999px";
+  el.style.background = "white";
+  el.style.boxShadow = `0 0 0 2px ${color}`;
+
+  let img = el.querySelector<HTMLImageElement>('[data-role="vehicle-marker-icon"]');
+  if (!img) {
+    img = document.createElement("img");
+    img.dataset.role = "vehicle-marker-icon";
+    img.alt = "";
+    img.style.objectFit = "contain";
+    img.addEventListener("error", () => {
+      // یک بار علامت می‌خورد تا رفرش بعدی صحنه دوباره همان URL خراب را امتحان نکند.
+      el.dataset.iconFailed = "true";
+      img?.remove();
+      el.style.borderRadius = "";
+      el.style.background = "";
+      el.style.boxShadow = "";
+      el.appendChild(buildVehicleMarkerSvg(size));
+    });
+    el.appendChild(img);
+  }
+
+  if (img.getAttribute("src") !== iconUrl) img.setAttribute("src", iconUrl);
+  img.style.width = `${size}px`;
+  img.style.height = `${size}px`;
 }
 
 function createVehicleMarkerElement(vehicle: MapSceneMission, selected: boolean): HTMLDivElement {

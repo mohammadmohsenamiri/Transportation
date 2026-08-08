@@ -20,9 +20,18 @@ async function upsertUserWithRole(
     });
 
     const passwordHash = await hashPassword(password);
+    // Phase 14 ستون‌های وضعیت تازه‌ای افزود؛ بدون پاک‌کردن آن‌ها یک تست که کاربر e2e را معلق یا
+    // حذف کند، خط پایه همه اجراهای بعدی را خراب می‌گذاشت. seed باید وضعیت را کاملاً بازنشانی کند.
     const user = await prisma.user.upsert({
       where: { username },
-      update: { passwordHash, mustChangePassword, isActive: true },
+      update: {
+        passwordHash,
+        mustChangePassword,
+        isActive: true,
+        suspendedAt: null,
+        suspensionReason: null,
+        deletedAt: null,
+      },
       create: { username, passwordHash, mustChangePassword },
     });
 

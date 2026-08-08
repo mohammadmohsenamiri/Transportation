@@ -1,6 +1,8 @@
 import { prisma } from "@/lib/db/prisma";
 import { simulateMissionPosition, type MissionSnapshot, type SimulationRoutePoint } from "@/lib/domain/mission-simulation";
 import type { MissionDisplayStatus } from "@/lib/domain/mission-rules";
+import { resolveIcon } from "@/lib/domain/icon-rules";
+import { usableIconIds } from "@/server/services/icon-service";
 
 export interface MapSceneMission {
   missionId: string;
@@ -27,6 +29,11 @@ export interface MapSceneMission {
   cargoTypeNames: string[];
   shipmentCount: number;
   shipmentTrackingCodes: string[];
+  /**
+   * Phase 14 — نشانی محتوای آیکن خودرو، یا `null` وقتی آیکنی تعیین نشده باشد. نقشه در حالت
+   * `null` به نشانگر دایره‌ای پیش‌فرض برمی‌گردد، پس نبود آیکن هرگز صحنه را خالی نمی‌کند (BR-I05).
+   */
+  iconUrl: string | null;
 }
 
 /**
@@ -37,18 +44,23 @@ export interface MapSceneMission {
  * موقعیت/فاصله/ETA/bearing در این فایل تکرار نمی‌شود.
  */
 export async function getMapScene(viewTime: Date): Promise<MapSceneMission[]> {
-  const missions = await prisma.mission.findMany({
-    where: { persistedStatus: "SCHEDULED", deletedAt: null },
-    include: {
-      vehicle: { include: { vehicleType: true } },
-      route: { include: { points: { orderBy: { sequence: "asc" } } } },
-      shipments: {
-        where: { isActiveAssignment: true },
-        include: { shipment: { include: { cargoType: true } } },
+  // یک بار برای کل صحنه خوانده می‌شود، نه به‌ازای هر مأموریت: تعیین آیکن یک تابع محض روی همین
+  // مجموعه است، پس افزودن آیکن به فاز ۱۴ یک پرس‌وجوی ثابت اضافه می‌کند، نه N تا.
+  const [missions, usableIcons] = await Promise.all([
+    prisma.mission.findMany({
+      where: { persistedStatus: "SCHEDULED", deletedAt: null },
+      include: {
+        vehicle: { include: { vehicleType: true } },
+        route: { include: { points: { orderBy: { sequence: "asc" } } } },
+        shipments: {
+          where: { isActiveAssignment: true },
+          include: { shipment: { include: { cargoType: true } } },
+        },
       },
-    },
-    orderBy: { startAt: "asc" },
-  });
+      orderBy: { startAt: "asc" },
+    }),
+    usableIconIds(),
+  ]);
 
   return missions.map((mission) => {
     let routePoints: SimulationRoutePoint[] | undefined;
@@ -76,6 +88,9 @@ export async function getMapScene(viewTime: Date): Promise<MapSceneMission[]> {
     const cargoTypeNames = [...new Set(mission.shipments.map((link) => link.shipment.cargoType.name))];
     const shipmentTrackingCodes = mission.shipments.map((link) => link.shipment.trackingCode);
 
+    // خودرو بر نوع خودرو اولویت دارد؛ آیکن حذف‌شده یا غیرفعال نادیده گرفته می‌شود و null می‌ماند.
+    const iconId = resolveIcon(mission.vehicle.iconAssetId, mission.vehicle.vehicleType.iconAssetId, usableIcons);
+
     return {
       missionId: mission.id,
       code: mission.code,
@@ -101,6 +116,7 @@ export async function getMapScene(viewTime: Date): Promise<MapSceneMission[]> {
       cargoTypeNames,
       shipmentCount: mission.shipments.length,
       shipmentTrackingCodes,
+      iconUrl: iconId ? `/api/v1/icons/${iconId}/content` : null,
     };
   });
 }
