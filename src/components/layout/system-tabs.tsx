@@ -16,6 +16,7 @@ const tabs: SystemTab[] = [
   { id: "vehicles", label: "خودروها", href: "/system/vehicles", enabled: true },
   { id: "vehicle-types", label: "انواع خودرو", href: "/system/vehicle-types", enabled: true },
   { id: "cargo-types", label: "انواع بار", href: "/system/cargo-types", enabled: true },
+  { id: "mission-types", label: "انواع مأموریت", href: "/system/mission-types", enabled: true },
   { id: "map-providers", label: "Provider نقشه", href: "/system/map-providers", enabled: true },
   { id: "icons", label: "آیکن‌ها", href: "/system/icons", enabled: true },
   { id: "users", label: "کاربران", href: "/system/users", enabled: true },

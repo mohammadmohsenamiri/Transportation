@@ -38,6 +38,7 @@ model User {
 
   uploadedIcons   IconAsset[]     @relation("IconAssetUploadedBy")
   updatedSettings SystemSetting[] @relation("SystemSettingUpdatedBy")
+  missionNotes    MissionNote[]   @relation("MissionNoteAuthor")
 
   createdOrganizationUnits OrganizationUnit[] @relation("OrganizationUnitCreatedBy")
   updatedOrganizationUnits OrganizationUnit[] @relation("OrganizationUnitUpdatedBy")
@@ -343,11 +344,31 @@ model Shipment {
   @@index([isActive])
 }
 
+/**
+ * مقادیر `COMPLETED` و `FAILED` در فاز ۱۵ افزوده شدند. `ARCHIVED` از فاز ۷ وجود داشت ولی هیچ کدی
+ * آن را نمی‌نوشت؛ فاز ۱۵ نخستین نویسنده آن است — بازتعریف نشده، فقط استفاده شده.
+ *
+ * ترتیب مقادیر در PostgreSQL قابل تغییر نیست و مقدار حذف نمی‌شود، پس دو مقدار تازه به انتها
+ * افزوده شده‌اند نه در جای «منطقی»شان.
+ */
 enum MissionPersistedStatus {
   DRAFT
   SCHEDULED
   CANCELLED
   ARCHIVED
+  COMPLETED
+  FAILED
+}
+
+/** طبقه‌بندی بسته علت شکست — متن آزاد در `failureReason` می‌آید (ADR-P15 §۲٫۴ سند دامنه). */
+enum MissionFailureClassification {
+  VEHICLE_BREAKDOWN
+  ACCIDENT
+  CARGO_ISSUE
+  ROUTE_BLOCKED
+  WEATHER
+  DRIVER_UNAVAILABLE
+  OTHER
 }
 
 model Mission {
@@ -376,6 +397,26 @@ model Mission {
   cancellationReason            String?
   duplicatedFromMissionId       String?
 
+  // Phase 15 — واقعیت‌های ثبت‌شده، *در کنار* داده برنامه‌ریزی نه به‌جای آن (ADR-006 و I-10).
+  // هیچ‌کدام از این ستون‌ها هرگز `startAt` یا `estimatedArrivalAt` را بازنویسی نمی‌کنند؛ همین
+  // تفکیک است که سنجش دقت تخمین را ممکن نگه می‌دارد.
+  actualDepartureAt     DateTime?
+  actualArrivalAt       DateTime?
+  failedAt              DateTime?
+  failureReason         String?
+  failureClassification MissionFailureClassification?
+  archivedAt            DateTime?
+  /** وضعیت پایانی پیش از بایگانی — ستون است نه استنتاج از audit، تا خروج از بایگانی قطعی و ارزان باشد. */
+  statusBeforeArchive   MissionPersistedStatus?
+  reopenCount           Int                           @default(0)
+  lastReopenedAt        DateTime?
+  /**
+   * توکن همروندی خوش‌بینانه (ADR-P15-05) — بدون معنای کسب‌وکاری.
+   * ⚠️ با `routeVersion` بالا اشتباه نشود: آن یکی نسخه *مسیر* را snapshot می‌کند.
+   */
+  version               Int                           @default(0)
+  missionTypeId         String?
+
   createdAt   DateTime  @default(now())
   updatedAt   DateTime  @updatedAt
   deletedAt   DateTime?
@@ -387,7 +428,10 @@ model Mission {
   destinationOrganizationUnit OrganizationUnit? @relation("MissionDestination", fields: [destinationOrganizationUnitId], references: [id])
   route                       Route?            @relation(fields: [routeId], references: [id])
 
-  shipments MissionShipment[]
+  missionType MissionType? @relation(fields: [missionTypeId], references: [id])
+
+  shipments    MissionShipment[]
+  missionNotes MissionNote[]
 
   createdBy User? @relation("MissionCreatedBy", fields: [createdById], references: [id])
   updatedBy User? @relation("MissionUpdatedBy", fields: [updatedById], references: [id])
@@ -397,6 +441,51 @@ model Mission {
   @@index([estimatedArrivalAt])
   @@index([persistedStatus])
   @@index([originWarehouseId])
+  @@index([missionTypeId])
+  // ایندکس تک‌ستونی `persistedStatus` دیگر مرتب‌سازی فهرست و بازه فرانما را پوشش نمی‌دهد.
+  @@index([persistedStatus, startAt])
+  @@index([actualArrivalAt])
+}
+
+/**
+ * Phase 15 — نوع مأموریت به‌عنوان داده مرجع، نه enum (ADR-P15-08).
+ * شکل آن عمداً دقیقاً مثل `VehicleType`/`CargoType` است تا سرویس و صفحه مدیریتی از همان الگو بروند.
+ */
+model MissionType {
+  id          String  @id @default(uuid())
+  code        String? @unique
+  name        String  @unique
+  description String?
+  isActive    Boolean @default(true)
+
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+
+  missions Mission[]
+
+  @@index([isActive])
+}
+
+/**
+ * Phase 15 — یادداشت زمان‌دار و دارای نویسنده. جایگزین `Mission.notes` *نمی‌شود*: آن ستون
+ * یادداشت اولیه برنامه‌ریز است بدون نویسنده و زمان، و ساختن این دو برایش یعنی جعل داده ممیزی
+ * (ADR-P15-09). یادداشت‌ها append-only هستند و از همروندی خوش‌بینانه معافند (CC-04).
+ */
+model MissionNote {
+  id          String    @id @default(uuid())
+  missionId   String
+  body        String    @db.VarChar(2000)
+  createdById String
+  createdAt   DateTime  @default(now())
+  deletedAt   DateTime?
+
+  mission   Mission @relation(fields: [missionId], references: [id])
+  createdBy User    @relation("MissionNoteAuthor", fields: [createdById], references: [id])
+
+  // ترکیبی، چون تنها پرس‌وجو «یادداشت‌های این مأموریت، جدیدترین اول» است.
+  @@index([missionId, createdAt])
+  @@index([createdById])
 }
 
 model MissionShipment {

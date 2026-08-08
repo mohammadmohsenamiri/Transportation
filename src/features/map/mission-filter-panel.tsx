@@ -27,6 +27,12 @@ const ETA_PRESET_LABEL: Record<EtaFilterPreset, string> = {
   OVERDUE: "دیرکرد",
 };
 
+/**
+ * `COMPLETED`/`FAILED` عمداً اینجا نیستند: صحنه نقشه فقط مأموریت‌های `SCHEDULED` را می‌خواند
+ * (`map-scene-service.ts`)، پس یک مأموریت تکمیل‌شده یا ناموفق اصلاً در این فهرست ظاهر نمی‌شود و
+ * افزودن گزینه‌ای که همیشه صفر نتیجه می‌دهد فقط گمراه‌کننده است. تفکیک این دو در فهرست
+ * مأموریت‌ها و فرانما دیده می‌شود، جایی که مأموریت‌های پایان‌یافته واقعاً حضور دارند.
+ */
 const DISPLAY_STATUS_OPTIONS: MissionDisplayStatusValue[] = ["WAITING", "IN_PROGRESS", "ARRIVED", "CANCELLED"];
 
 export interface MissionFilterFormProps {

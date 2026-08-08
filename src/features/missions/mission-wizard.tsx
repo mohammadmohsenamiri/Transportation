@@ -200,6 +200,9 @@ export function MissionWizard({ editMission }: MissionWizardProps) {
     setServerError(null);
     try {
       const payload = {
+        // نسخه‌ای که همین صفحه خوانده است؛ در حالت ساخت بی‌اثر است و در حالت ویرایش
+        // پیش‌شرط نوشتن (FR-10).
+        version: editMission?.version ?? 0,
         shipmentIds: selectedShipmentIds,
         vehicleId,
         startAt: jalaliToUtcIso(startAt),

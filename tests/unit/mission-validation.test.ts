@@ -47,8 +47,17 @@ describe("missionCreateSchema", () => {
 
 describe("missionCancelSchema", () => {
   it("requires a non-empty cancellation reason", () => {
-    expect(missionCancelSchema.safeParse({ cancellationReason: "" }).success).toBe(false);
-    expect(missionCancelSchema.safeParse({ cancellationReason: "تغییر برنامه" }).success).toBe(true);
+    expect(missionCancelSchema.safeParse({ version: 0, cancellationReason: "" }).success).toBe(false);
+    expect(missionCancelSchema.safeParse({ version: 0, cancellationReason: "تغییر برنامه" }).success).toBe(true);
+  });
+
+  /**
+   * Phase 15 (V-03) — `version` اجباری شد؛ تغییر شکننده و عمدی در قرارداد (ADR-P15-05).
+   * حذف آن باید ۴۲۲ بدهد، نه موفقیت بی‌صدا — چون همان حالت است که بازنویسی خاموش را ممکن می‌کرد.
+   */
+  it("رد می‌کند وقتی توکن نسخه ارسال نشده باشد", () => {
+    expect(missionCancelSchema.safeParse({ cancellationReason: "تغییر برنامه" }).success).toBe(false);
+    expect(missionCancelSchema.safeParse({ version: -1, cancellationReason: "تغییر برنامه" }).success).toBe(false);
   });
 });
 

@@ -6,12 +6,14 @@ import { ApiError } from "@/lib/http/api-client-error";
 
 export interface MissionCancelDialogProps {
   missionId: string;
+  /** Phase 15 — نسخه‌ای که صفحه خوانده است؛ پیش‌شرط نوشتن (FR-10). */
+  missionVersion: number;
   open: boolean;
   onClose: () => void;
   onCancelled: () => void;
 }
 
-export function MissionCancelDialog({ missionId, open, onClose, onCancelled }: MissionCancelDialogProps) {
+export function MissionCancelDialog({ missionId, missionVersion, open, onClose, onCancelled }: MissionCancelDialogProps) {
   const [reason, setReason] = useState("");
   const [error, setError] = useState<string | null>(null);
   const mutation = useCancelMission();
@@ -21,7 +23,7 @@ export function MissionCancelDialog({ missionId, open, onClose, onCancelled }: M
   async function handleConfirm() {
     setError(null);
     try {
-      await mutation.mutateAsync({ id: missionId, cancellationReason: reason });
+      await mutation.mutateAsync({ id: missionId, cancellationReason: reason, version: missionVersion });
       setReason("");
       onCancelled();
     } catch (err) {

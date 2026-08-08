@@ -1,5 +1,9 @@
 import { haversineDistanceMeters, type GeoPoint } from "@/lib/geo/distance";
-import { deriveMissionDisplayStatus, type MissionDisplayStatus } from "@/lib/domain/mission-rules";
+import {
+  deriveMissionDisplayStatus,
+  type MissionDisplayStatus,
+  type MissionPersistedStatus,
+} from "@/lib/domain/mission-rules";
 
 export interface SimulationRoutePoint {
   sequence: number;
@@ -34,8 +38,12 @@ export interface MissionSnapshot {
   startAt: Date;
   estimatedArrivalAt: Date;
   speedKmh: number;
-  persistedStatus: "DRAFT" | "SCHEDULED" | "CANCELLED" | "ARCHIVED";
+  persistedStatus: MissionPersistedStatus;
   cancelledAt: Date | null;
+  /** Phase 15 — لنگر انجماد برای مأموریت تکمیل‌شده (SF-01). */
+  actualArrivalAt?: Date | null;
+  /** Phase 15 — لنگر انجماد برای مأموریت ناموفق (SF-02). */
+  failedAt?: Date | null;
   origin: GeoPoint;
   destination: GeoPoint;
   routePoints?: readonly SimulationRoutePoint[];
@@ -225,6 +233,13 @@ export function simulateMissionPosition(mission: MissionSnapshot, viewTime: Date
   let effectiveViewTime = viewTime;
   if (status === "CANCELLED" && mission.cancelledAt) {
     effectiveViewTime = new Date(Math.min(viewTime.getTime(), mission.cancelledAt.getTime()));
+  } else if (status === "COMPLETED" && mission.actualArrivalAt) {
+    // Phase 15 (SF-01) — دقیقاً همان الگوی CANCELLED: مأموریتی که اپراتور تکمیلش را تأیید کرده
+    // نباید با گذشت زمان همچنان «در حال حرکت» دیده شود.
+    effectiveViewTime = new Date(Math.min(viewTime.getTime(), mission.actualArrivalAt.getTime()));
+  } else if (status === "FAILED" && mission.failedAt) {
+    // SF-02 — انجماد در لحظه شکست؛ خودرو از آن نقطه جلوتر نرفته است.
+    effectiveViewTime = new Date(Math.min(viewTime.getTime(), mission.failedAt.getTime()));
   } else if (status === "ARCHIVED") {
     effectiveViewTime = mission.estimatedArrivalAt; // EC-11: دفاعی/آماده آینده — هنوز مسیر واقعی برای این وضعیت وجود ندارد
   }

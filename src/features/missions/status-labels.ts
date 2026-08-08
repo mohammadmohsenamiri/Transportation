@@ -10,6 +10,10 @@ export const missionDisplayStatusTone: Record<MissionDisplayStatusValue, StatTon
   WAITING: "warning",
   IN_PROGRESS: "primary",
   ARRIVED: "success",
+  // تکمیل‌شده هم‌رنگ «رسیده (تخمینی)» است چون هر دو نتیجه مثبت‌اند؛ تفاوت باور و واقعیت را
+  // برچسب می‌رساند نه رنگ — رنگ هرگز تنها حامل معنا نیست (AX-03).
+  COMPLETED: "success",
+  FAILED: "danger",
   CANCELLED: "danger",
   ARCHIVED: "info",
 };

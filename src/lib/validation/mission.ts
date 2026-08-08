@@ -13,7 +13,14 @@ export const missionCreateSchema = z.object({
 });
 export type MissionCreateInput = z.infer<typeof missionCreateSchema>;
 
+/**
+ * Phase 15 (V-03) — توکن همروندی روی هر عملیات تغییردهنده مأموریت اجباری است.
+ * حذف آن ۴۲۲ می‌دهد، نه موفقیت بی‌صدا.
+ */
+export const missionVersionField = z.number("توکن نسخه الزامی است.").int().nonnegative();
+
 export const missionUpdateSchema = z.object({
+  version: missionVersionField,
   shipmentIds: z.array(z.uuid()).min(1, "حداقل یک مرسوله باید انتخاب شود.").optional(),
   vehicleId: z.uuid("خودرو نامعتبر است.").optional(),
   startAt: isoDateTimeSchema.optional(),
@@ -23,6 +30,7 @@ export const missionUpdateSchema = z.object({
 export type MissionUpdateInput = z.infer<typeof missionUpdateSchema>;
 
 export const missionCancelSchema = z.object({
+  version: missionVersionField,
   cancellationReason: z.string().trim().min(1, "دلیل لغو الزامی است.").max(500, "دلیل لغو نباید بیش از ۵۰۰ کاراکتر باشد."),
 });
 export type MissionCancelInput = z.infer<typeof missionCancelSchema>;

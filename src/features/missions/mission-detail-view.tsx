@@ -12,6 +12,9 @@ import { useActiveMapProvider } from "@/features/map/use-map-queries";
 import { MissionWizard } from "@/features/missions/mission-wizard";
 import { MissionHistory } from "@/features/missions/mission-history";
 import { MissionCancelDialog } from "@/features/missions/mission-cancel-dialog";
+import { MissionLifecyclePanel } from "@/features/missions/mission-lifecycle-panel";
+import { MissionNoteThread } from "@/features/missions/mission-note-thread";
+import { missionFailureClassificationLabel } from "@/lib/domain/mission-labels";
 import { MissionDuplicateDialog } from "@/features/missions/mission-duplicate-dialog";
 import { missionDisplayStatusLabel, missionDisplayStatusTone } from "@/features/missions/status-labels";
 import type { DrawPoint } from "@/features/routes/route-draw-map-inner";
@@ -142,6 +145,78 @@ export function MissionDetailView({ missionId, canManage }: { missionId: string;
         </Panel>
       </div>
 
+      {/*
+        FR-07 — واقعیت‌های ثبت‌شده *در کنار* برنامه نشان داده می‌شوند و با برچسب «واقعی» از
+        «تقریبی» جدا می‌شوند. برنامه هرگز با واقعیت بازنویسی نمی‌شود (I-10)، و همین تفکیک است که
+        سنجش دقت تخمین را ممکن می‌کند.
+      */}
+      {(mission.actualArrivalAt || mission.failedAt || mission.archivedAt || mission.reopenCount > 0) && (
+        <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+          {mission.actualDepartureAt && (
+            <Panel className="p-3">
+              <p className="text-xs text-[var(--color-text-muted)]">زمان حرکت واقعی</p>
+              <p className="tabular-nums mt-1 text-sm font-medium text-[var(--color-text)]">
+                {new Date(mission.actualDepartureAt).toLocaleString("fa-IR")}
+              </p>
+            </Panel>
+          )}
+          {mission.actualArrivalAt && (
+            <Panel className="p-3">
+              <p className="text-xs text-[var(--color-text-muted)]">زمان رسیدن واقعی</p>
+              <p className="tabular-nums mt-1 text-sm font-medium text-[var(--color-text)]">
+                {new Date(mission.actualArrivalAt).toLocaleString("fa-IR")}
+              </p>
+              {mission.arrivalVarianceMinutes !== null && (
+                <p
+                  className={`mt-1 text-xs ${
+                    mission.arrivalVarianceMinutes > 0
+                      ? "text-[var(--color-warning)]"
+                      : "text-[var(--color-success)]"
+                  }`}
+                >
+                  {mission.arrivalVarianceMinutes === 0
+                    ? "دقیقاً مطابق تخمین"
+                    : mission.arrivalVarianceMinutes > 0
+                      ? `${mission.arrivalVarianceMinutes.toLocaleString("fa-IR")} دقیقه دیرتر از تخمین`
+                      : `${Math.abs(mission.arrivalVarianceMinutes).toLocaleString("fa-IR")} دقیقه زودتر از تخمین`}
+                </p>
+              )}
+            </Panel>
+          )}
+          {mission.failedAt && (
+            <Panel className="p-3">
+              <p className="text-xs text-[var(--color-text-muted)]">زمان شکست</p>
+              <p className="tabular-nums mt-1 text-sm font-medium text-[var(--color-text)]">
+                {new Date(mission.failedAt).toLocaleString("fa-IR")}
+              </p>
+              {mission.failureClassification && (
+                <p className="mt-1 text-xs text-[var(--color-danger)]">
+                  {missionFailureClassificationLabel[mission.failureClassification]}
+                </p>
+              )}
+            </Panel>
+          )}
+          {mission.reopenCount > 0 && (
+            <Panel className="p-3">
+              <p className="text-xs text-[var(--color-text-muted)]">دفعات بازگشایی</p>
+              <p className="tabular-nums mt-1 text-sm font-medium text-[var(--color-text)]">
+                {mission.reopenCount.toLocaleString("fa-IR")}
+              </p>
+            </Panel>
+          )}
+        </div>
+      )}
+
+      {mission.failureReason && (
+        <Panel className="p-4">
+          <p className="text-xs font-medium text-[var(--color-text-muted)]">شرح علت شکست</p>
+          <p className="mt-1 text-sm leading-6 whitespace-pre-wrap text-[var(--color-text)]">{mission.failureReason}</p>
+        </Panel>
+      )}
+
+      <MissionLifecyclePanel mission={mission} canManageLifecycle={canManage} />
+      {canManage && <MissionNoteThread missionId={mission.id} />}
+
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
         <div className="flex flex-col gap-4 lg:col-span-2">
           <Panel className="h-[320px] overflow-hidden sm:h-[380px]">
@@ -192,6 +267,7 @@ export function MissionDetailView({ missionId, canManage }: { missionId: string;
 
       <MissionCancelDialog
         missionId={mission.id}
+        missionVersion={mission.version}
         open={cancelOpen}
         onClose={() => setCancelOpen(false)}
         onCancelled={() => setCancelOpen(false)}

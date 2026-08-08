@@ -7,7 +7,7 @@ import { flattenIssues } from "@/lib/validation/utils";
 import { DomainError } from "@/lib/errors/domain-error";
 
 const ALLOWED_ROLES = [RoleCode.ADMIN, RoleCode.MISSION_PLANNER];
-const PERSISTED_STATUS_VALUES = ["DRAFT", "SCHEDULED", "CANCELLED", "ARCHIVED"] as const;
+const PERSISTED_STATUS_VALUES = ["DRAFT", "SCHEDULED", "COMPLETED", "FAILED", "CANCELLED", "ARCHIVED"] as const;
 
 export async function GET(request: NextRequest) {
   const result = await requireActor(ALLOWED_ROLES);

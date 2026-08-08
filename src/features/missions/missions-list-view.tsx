@@ -12,7 +12,7 @@ import { missionDisplayStatusLabel, missionDisplayStatusTone } from "@/features/
 import { useSearchParamSeed } from "@/lib/navigation/use-search-param-seed";
 import type { Mission, MissionPersistedStatusValue } from "@/features/missions/types";
 
-const PERSISTED_STATUS_VALUES: MissionPersistedStatusValue[] = ["DRAFT", "SCHEDULED", "CANCELLED", "ARCHIVED"];
+const PERSISTED_STATUS_VALUES: MissionPersistedStatusValue[] = ["DRAFT", "SCHEDULED", "COMPLETED", "FAILED", "CANCELLED", "ARCHIVED"];
 
 function formatKm(meters: number): string {
   return `${(meters / 1000).toLocaleString("fa-IR", { maximumFractionDigits: 1 })} کیلومتر`;

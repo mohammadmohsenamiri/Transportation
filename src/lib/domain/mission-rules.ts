@@ -68,22 +68,62 @@ export function missionTimeRangesOverlap(a: MissionTimeRange, b: MissionTimeRang
   return a.startAt.getTime() < b.estimatedArrivalAt.getTime() && b.startAt.getTime() < a.estimatedArrivalAt.getTime();
 }
 
-export type MissionDisplayStatus = "DRAFT" | "WAITING" | "IN_PROGRESS" | "ARRIVED" | "CANCELLED" | "ARCHIVED";
+/** وضعیت *ثبت‌شده* — ستون DB. شش مقدار. */
+export type MissionPersistedStatus = "DRAFT" | "SCHEDULED" | "COMPLETED" | "FAILED" | "CANCELLED" | "ARCHIVED";
+
+/** وضعیت *نمایشی* — خروجی `deriveMissionDisplayStatus`. هشت مقدار. */
+export type MissionDisplayStatus =
+  | "DRAFT"
+  | "WAITING"
+  | "IN_PROGRESS"
+  | "ARRIVED"
+  | "COMPLETED"
+  | "FAILED"
+  | "CANCELLED"
+  | "ARCHIVED";
+
+export type MissionFailureClassificationValue =
+  | "VEHICLE_BREAKDOWN"
+  | "ACCIDENT"
+  | "CARGO_ISSUE"
+  | "ROUTE_BLOCKED"
+  | "WEATHER"
+  | "DRIVER_UNAVAILABLE"
+  | "OTHER";
 
 export interface MissionStatusInput {
-  persistedStatus: "DRAFT" | "SCHEDULED" | "CANCELLED" | "ARCHIVED";
+  persistedStatus: MissionPersistedStatus;
   startAt: Date;
   estimatedArrivalAt: Date;
 }
 
 /**
- * وضعیت نمایشی مشتق‌شده صرفاً برای تعیین قفل ویرایش (ADR-018) در این فاز استفاده می‌شود؛
- * موتور کامل موقعیت تقریبی (interpolation روی مسیر) در Phase 9 پیاده می‌شود.
+ * وضعیت‌های پایانی *ثبت‌شده* — بر وضعیت ساعت‌محور اولویت دارند.
+ * `SCHEDULED` تنها مقداری است که به سه وضعیت نمایشی باز می‌شود؛ بقیه ۱:۱ نگاشت می‌شوند و
+ * دقیقاً به همین دلیل می‌توانند مقایسه با ساعت را کوتاه کنند.
+ */
+const TERMINAL_PERSISTED: readonly MissionPersistedStatus[] = ["COMPLETED", "FAILED", "CANCELLED", "ARCHIVED"];
+
+export function isTerminalPersistedStatus(status: MissionPersistedStatus): boolean {
+  return TERMINAL_PERSISTED.includes(status);
+}
+
+/**
+ * تنها داور وضعیت نمایشی مأموریت — نقشه (فاز ۱۰)، جدول (فاز ۱۱)، خط زمان (فاز ۱۲) و فرانما
+ * (فاز ۱۳) همگی از همین یک تابع می‌خوانند. ترتیب ارزیابی الزام‌آور است و نخستین تطابق برنده است.
+ *
+ * فاز ۱۵ فقط دو ردیف افزود (`COMPLETED` و `FAILED`) و آن‌ها را دقیقاً همان‌جایی گذاشت که
+ * `CANCELLED`/`ARCHIVED` از قبل بودند: پیش از هر مقایسه‌ای با ساعت. همین باعث می‌شود وضعیت
+ * ثبت‌شده همیشه بر وضعیت تخمینی مقدم باشد و هر چهار مصرف‌کننده بدون هیچ تغییری هماهنگ بمانند.
+ *
+ * تابع محض و total است: برای هر مأموریتی تعریف شده و هرگز throw نمی‌کند (I-13).
  */
 export function deriveMissionDisplayStatus(mission: MissionStatusInput, now: Date): MissionDisplayStatus {
   if (mission.persistedStatus === "DRAFT") return "DRAFT";
   if (mission.persistedStatus === "CANCELLED") return "CANCELLED";
   if (mission.persistedStatus === "ARCHIVED") return "ARCHIVED";
+  if (mission.persistedStatus === "COMPLETED") return "COMPLETED";
+  if (mission.persistedStatus === "FAILED") return "FAILED";
   if (now.getTime() < mission.startAt.getTime()) return "WAITING";
   if (now.getTime() >= mission.estimatedArrivalAt.getTime()) return "ARRIVED";
   return "IN_PROGRESS";
