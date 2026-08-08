@@ -22,8 +22,22 @@ model User {
   createdAt          DateTime @default(now())
   updatedAt          DateTime @updatedAt
 
+  // Phase 14 — همه افزایشی و nullable/پیش‌فرض‌دار، پس هیچ backfill لازم نیست.
+  displayName      String?
+  deletedAt        DateTime?
+  lastLoginAt      DateTime?
+  suspendedAt      DateTime?
+  suspensionReason String?
+  /**
+   * توکن همروندی خوش‌بینانه — بدون معنای کسب‌وکاری (ADR-P14-09).
+   */
+  version          Int       @default(0)
+
   roles    UserRole[]
   sessions Session[]
+
+  uploadedIcons   IconAsset[]     @relation("IconAssetUploadedBy")
+  updatedSettings SystemSetting[] @relation("SystemSettingUpdatedBy")
 
   createdOrganizationUnits OrganizationUnit[] @relation("OrganizationUnitCreatedBy")
   updatedOrganizationUnits OrganizationUnit[] @relation("OrganizationUnitUpdatedBy")
@@ -35,6 +49,11 @@ model User {
   updatedShipments         Shipment[]         @relation("ShipmentUpdatedBy")
   createdMissions          Mission[]          @relation("MissionCreatedBy")
   updatedMissions          Mission[]          @relation("MissionUpdatedBy")
+
+  @@index([deletedAt])
+  // نگهبان «آخرین مدیر فعال» و فهرست پیش‌فرض کاربران دقیقاً روی همین جفت فیلتر می‌کنند؛
+  // بدون این ایندکس، آن نگهبان که داخل تراکنش با FOR UPDATE اجرا می‌شود جدول را sequential می‌خواند.
+  @@index([isActive, deletedAt])
 }
 
 model Role {
@@ -106,8 +125,14 @@ model OrganizationUnit {
   missionOrigins       Mission[]  @relation("MissionOrigin")
   missionDestinations  Mission[]  @relation("MissionDestination")
 
+  // Phase 14 — آیکن اختیاری. SetNull در کنار soft-delete: اگر روزی رکوردی سخت حذف شود،
+  // ارجاع معلق نمی‌ماند و رندر نقشه نمی‌شکند.
+  iconAssetId String?
+  iconAsset   IconAsset? @relation(fields: [iconAssetId], references: [id], onDelete: SetNull)
+
   @@index([parentId])
   @@index([level])
+  @@index([iconAssetId])
 }
 
 enum VehicleReadiness {
@@ -128,7 +153,11 @@ model VehicleType {
 
   vehicles Vehicle[]
 
+  iconAssetId String?
+  iconAsset   IconAsset? @relation(fields: [iconAssetId], references: [id], onDelete: SetNull)
+
   @@index([isActive])
+  @@index([iconAssetId])
 }
 
 model CargoType {
@@ -166,8 +195,12 @@ model Vehicle {
   vehicleType VehicleType @relation(fields: [vehicleTypeId], references: [id])
   missions    Mission[]
 
+  iconAssetId String?
+  iconAsset   IconAsset? @relation(fields: [iconAssetId], references: [id], onDelete: SetNull)
+
   @@index([vehicleTypeId])
   @@index([readiness])
+  @@index([iconAssetId])
 }
 
 enum MapProviderKind {
@@ -395,4 +428,74 @@ model AuditLog {
 
   @@index([entityType, entityId])
   @@index([actorUserId])
+}
+
+// ---------------------------------------------------------------------------
+// Phase 14 — کتابخانه آیکن و تنظیمات سامانه
+// ---------------------------------------------------------------------------
+
+/**
+ * دسته آیکن — طبق ARCHITECTURE_AND_DATA_MODEL.md §IconAsset.
+ * نگاشت به موجودیت‌ها عمداً یک‌به‌یک نیست: OFFICE سه سطح دفتری OrganizationLevel را
+ * پوشش می‌دهد و WAREHOUSE یک سطح را. این دسته یک صافی سازمانی برای گالری مدیر است،
+ * نه یک مرز صحت داده.
+ */
+enum IconCategory {
+  VEHICLE
+  OFFICE
+  WAREHOUSE
+  DESTINATION
+  OTHER
+}
+
+model IconAsset {
+  id       String       @id @default(uuid())
+  name     String
+  category IconCategory
+  mimeType String
+
+  /**
+   * نسبی به ICON_ROOT — نه مطلق، تا جابه‌جایی محل ذخیره‌سازی نیازمند migration داده نباشد.
+   */
+  storagePath      String
+  sha256           String
+  width            Int?
+  height           Int?
+  fileSize         Int
+  /**
+   * فقط برای نمایش؛ هرگز برای ساختن مسیر فایل استفاده نمی‌شود (SEC-11).
+   */
+  originalFilename String?
+
+  isActive Boolean @default(true)
+  version  Int     @default(0)
+
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+  deletedAt    DateTime?
+  uploadedById String?
+
+  uploadedBy        User?              @relation("IconAssetUploadedBy", fields: [uploadedById], references: [id])
+  organizationUnits OrganizationUnit[]
+  vehicleTypes      VehicleType[]
+  vehicles          Vehicle[]
+
+  @@index([category, isActive])
+  @@index([deletedAt])
+  @@index([sha256])
+}
+
+/**
+ * تنظیمات سامانه — کلید/مقدار با نوع‌دهی از رجیستری کد، نه از ستون (ADR-P14-06).
+ * رکوردها تنبل ساخته می‌شوند: کلیدِ بدون رکورد از مقدار پیش‌فرض رجیستری استفاده می‌کند،
+ * پس این جدول دقیقاً «انحراف‌های اپراتور از پیش‌فرض» را نگه می‌دارد.
+ */
+model SystemSetting {
+  key         String   @id
+  value       Json
+  version     Int      @default(0)
+  updatedAt   DateTime @updatedAt
+  updatedById String?
+
+  updatedBy User? @relation("SystemSettingUpdatedBy", fields: [updatedById], references: [id])
 }
